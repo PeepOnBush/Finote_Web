@@ -1,0 +1,72 @@
+﻿@model Finote_Web.Models.SettingsViewModel
+@{
+    ViewData["Title"] = "System Settings";
+}
+<main>
+    <div class="page-header">
+        <h1>Trang Cấu Hình</h1>
+        <p>Configuration Page</p>
+    </div>
+
+    <div class="content-card">
+        <nav class="tab-nav">
+            <button class="tab-link active" data-tab="system">Cấu hình hệ thống</button>
+            <button class="tab-link" data-tab="backup">Backup dữ liệu</button>
+            <button class="tab-link" data-tab="notify">Gửi thông báo (email)</button>
+        </nav>
+
+        <!-- Tab 1: System Configuration -->
+        <div class="tab-content active" id="system">
+            <h4>System Configuration (Email, API key, quota)</h4>
+            <form class="settings-form">
+                <div class="form-group">
+                    <label asp-for="SmtpHost">SMTP Host</label>
+                    <input asp-for="SmtpHost" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label asp-for="ApiKey">External API Key</label>
+                    <input asp-for="ApiKey" type="password" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label asp-for="DailyApiQuota">Daily API Quota</label>
+                    <input asp-for="DailyApiQuota" type="number" class="form-control">
+                </div>
+                <button type="submit" class="btn-primary">Save Settings</button>
+            </form>
+        </div>
+
+        <!-- Tab 2: Data Backup -->
+        <div class="tab-content" id="backup">
+            <h4>Data Backup</h4>
+            <p>Create a backup of the entire database.</p>
+            <div class="backup-section">
+                @if (Model.LastBackupDate.HasValue)
+                {
+                    <p><strong>Last Backup:</strong> @Model.LastBackupDate.Value.ToString("yyyy-MM-dd h:mm tt")</p>
+                }
+                else
+                {
+                    <p><strong>Last Backup:</strong> Never</p>
+                }
+                <button class="btn-primary"><i class="fas fa-download"></i> Create New Backup</button>
+            </div>
+        </div>
+
+        <!-- Tab 3: Send Notification -->
+        <div class="tab-content" id="notify">
+            <h4>Send Notification Email</h4>
+            <p>Send a broadcast email to all registered users.</p>
+            <form class="settings-form">
+                <div class="form-group">
+                    <label asp-for="NotificationSubject">Subject</label>
+                    <input asp-for="NotificationSubject" class="form-control" placeholder="e.g., Important System Update">
+                </div>
+                <div class="form-group">
+                    <label asp-for="NotificationBody">Message</label>
+                    <textarea asp-for="NotificationBody" class="form-control" rows="8" placeholder="Compose your message here..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Send Broadcast</button>
+            </form>
+        </div>
+    </div>
+</main>

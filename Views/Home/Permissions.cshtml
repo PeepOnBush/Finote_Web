@@ -1,0 +1,78 @@
+﻿@model Finote_Web.Models.PermissionsViewModel
+@{
+    ViewData["Title"] = "Permissions & Security";
+}
+<main>
+    <div class="page-header">
+        <h1>Trang Phân Quyền và Bảo Mật</h1>
+        <p>Authorization and Security Page</p>
+    </div>
+
+    <div class="content-card">
+        <nav class="tab-nav">
+            <button class="tab-link active" data-tab="roles">Danh sách Role</button>
+            <button class="tab-link" data-tab="permissions">Chỉnh sửa quyền</button>
+            <button class="tab-link" data-tab="assign">Gán quyền cho user</button>
+            <button class="tab-link" data-tab="logs">Nhật ký hoạt động</button>
+        </nav>
+
+        <!-- Tab 1: Role List -->
+        <div class="tab-content active" id="roles">
+            <h4>Role List</h4>
+            <p>Manage the roles available in the system.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>ROLE NAME</th><th>USERS</th><th>ACTIONS</th></tr></thead>
+                    <tbody>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <tr>
+                                <td><span class="role-badge role-@(role.Name.ToLower())">@role.Name</span></td>
+                                <td>@role.UserCount.ToString("N0")</td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn"><i class="fas fa-pencil-alt"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash-alt"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Edit Permissions (static for now) -->
+        <div class="tab-content" id="permissions">
+            <h4>Edit Permissions</h4>
+            <p>Define what each role can see and do.</p>
+            <!-- Placeholder content -->
+        </div>
+
+        <!-- Tab 3: Assign Role (static for now) -->
+        <div class="tab-content" id="assign">
+            <h4>Assign Role to User</h4>
+            <p>Change a specific user's role.</p>
+            <!-- Placeholder content -->
+        </div>
+
+        <!-- Tab 4: Activity Log -->
+        <div class="tab-content" id="logs">
+            <h4>Activity Log (Log truy cập)</h4>
+            <p>A log of important actions taken by users.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>USER</th><th>ACTION</th><th>TIMESTAMP</th></tr></thead>
+                    <tbody>
+                        @foreach (var log in Model.ActivityLogs)
+                        {
+                            <tr>
+                                <td>@log.UserEmail</td>
+                                <td>@log.Action</td>
+                                <td>@log.Timestamp.ToString("yyyy-MM-dd h:mm tt")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>

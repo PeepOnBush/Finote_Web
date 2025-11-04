@@ -1,0 +1,74 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Main Dashboard Content -->
+<main>
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Welcome back, Admin! Here's an overview of the application status.</p>
+    </div>
+
+    <!-- Stats Cards Grid -->
+    <div class="stats-grid">
+        <div class="stat-card color-blue">
+            <i class="fas fa-users"></i>
+            <h2>1,250</h2>
+            <p>Total Users</p>
+        </div>
+        <div class="stat-card color-yellow">
+            <i class="fas fa-dollar-sign"></i>
+            <h2>$45,890</h2>
+            <p>Total Revenue (This Month)</p>
+        </div>
+        <div class="stat-card color-lightblue">
+            <i class="fas fa-receipt"></i>
+            <h2>8,430</h2>
+            <p>Transactions Processed</p>
+        </div>
+        <div class="stat-card color-green">
+            <i class="fas fa-user-plus"></i>
+            <h2>72</h2>
+            <p>New Signups (Today)</p>
+        </div>
+    </div>
+
+    <!-- Main Content Area with Chart and Info Panel -->
+    <div class="content-row">
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Financial Performance</h3>
+                <div class="legend">
+                    <span class="legend-item income">Income</span>
+                    <span class="legend-item expenses">Expenses</span>
+                </div>
+            </div>
+            <div class="chart-placeholder">
+                <i class="fas fa-chart-line"></i>
+                <p>Chart Data Would Be Displayed Here</p>
+            </div>
+        </div>
+
+        <!-- Side Info Panel -->
+        <div class="info-panel">
+            <h3>Quick Actions</h3>
+            <div class="info-item">
+                <i class="fas fa-user-edit"></i>
+                <p>Review new users</p>
+                <span>5 <i class="fas fa-chevron-right"></i></span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-flag"></i>
+                <p>Flagged transactions</p>
+                <span>2 <i class="fas fa-chevron-right"></i></span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-life-ring"></i>
+                <p>Support tickets</p>
+                <span>8 <i class="fas fa-chevron-right"></i></span>
+            </div>
+            <a href="#" class="btn-primary">Generate Report</a>
+        </div>
+    </div>
+</main>

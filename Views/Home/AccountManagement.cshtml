@@ -1,0 +1,55 @@
+﻿@model Finote_Web.Models.AccountManagementViewModel
+@{
+    ViewData["Title"] = "Account Management";
+}
+
+<main>
+    <div class="page-header">
+        <h1>Account Management</h1>
+        <p>Manage user accounts, roles, and permissions.</p>
+    </div>
+
+    <div class="content-card">
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="search" placeholder="Search by name or email...">
+            </div>
+            <a href="#" class="btn-primary"><i class="fas fa-plus"></i> Add New User</a>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>USER</th>
+                        <th>EMAIL</th>
+                        <th>ROLE</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loop through the users from the ViewModel -->
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="user-profile">
+                                    <img src="@user.AvatarUrl" alt="User Avatar">
+                                    <span>@user.FullName</span>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td><span class="role-badge role-@(user.Role.ToLower())">@user.Role</span></td>
+                            <td class="actions-cell">
+                                <a href="#" class="action-btn" title="Update"><i class="fas fa-pencil-alt"></i></a>
+                                <a href="#" class="action-btn" title="Details"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
