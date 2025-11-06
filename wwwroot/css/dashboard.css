@@ -691,3 +691,25 @@ tbody tr:last-child td {
 .backup-section .btn-primary {
     margin-top: 1rem; /* Space between text and button */
 }
+.stat-card.color-red h2 {
+    color: #e74c3c;
+}
+
+/* Styles for income/expense amounts in the table */
+.amount {
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.95rem;
+}
+
+    .amount.income {
+        color: #27ae60; /* Darker green */
+        background-color: #eaf8f1;
+    }
+
+    .amount.expense {
+        color: #c0392b; /* Darker red */
+        background-color: #fbeee
+    }

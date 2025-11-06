@@ -1,4 +1,4 @@
-﻿namespace Finote_Web.Models
+﻿namespace Finote_Web.ViewModels
 {
     // Represents a single user row in the table
     public class UserViewModel

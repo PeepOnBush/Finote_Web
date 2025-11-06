@@ -1,6 +1,5 @@
-﻿using Finote_Web.Models; // Add this using statement
+﻿using Finote_Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-
 namespace Finote_Web.Controllers
 {
     public class HomeController : Controller
@@ -28,7 +27,27 @@ namespace Finote_Web.Controllers
 
             return View(viewModel); // Pass the model to the view
         }
+        public IActionResult TransactionManagement()
+        {
+            ViewData["CurrentPage"] = "TransactionManagement";
 
+            // Create and populate the ViewModel with sample data
+            var viewModel = new TransactionManagementViewModel
+            {
+                Transactions = new List<TransactionViewModel>
+        {
+            new TransactionViewModel { Id = 101, Amount = 50.00m, CategoryName = "Food", TransactionType = "Expense", Note = "Lunch with team", TransactionDate = DateTime.Now.AddDays(-1), WalletName = "Personal", UserName = "Dang Thinh Dai" },
+            new TransactionViewModel { Id = 102, Amount = 1200.00m, CategoryName = "Salary", TransactionType = "Income", Note = "Monthly salary", TransactionDate = DateTime.Now.AddDays(-2), WalletName = "Personal", UserName = "Dang Thinh Dai" },
+            new TransactionViewModel { Id = 103, Amount = 75.50m, CategoryName = "Groceries", TransactionType = "Expense", Note = "Weekly shopping", TransactionDate = DateTime.Now.AddDays(-3), WalletName = "Shared Wallet", UserName = "Nguyen Van A" },
+            new TransactionViewModel { Id = 104, Amount = 25.00m, CategoryName = "Transport", TransactionType = "Expense", Note = "Bus fare", TransactionDate = DateTime.Now.AddDays(-4), WalletName = "Personal", UserName = "Tran Thi B" }
+        },
+                TotalIncome = 1200.00m,
+                TotalExpense = 150.50m,
+                TransactionCount = 4
+            };
+
+            return View(viewModel);
+        }
         public IActionResult ReportUsers()
         {
             ViewData["CurrentPage"] = "Statistics";
@@ -100,5 +119,6 @@ namespace Finote_Web.Controllers
             };
             return View(viewModel);
         }
+
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Finote_Web.Models
+﻿namespace Finote_Web.ViewModels
 {
     // Represents a single role in the role list tab
     public class RoleViewModel

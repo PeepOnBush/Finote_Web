@@ -1,4 +1,4 @@
-﻿using Finote_Web.Models;
+﻿using Finote_Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finote_Web.Controllers

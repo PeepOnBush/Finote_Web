@@ -1,4 +1,4 @@
-﻿namespace Finote_Web.Models
+﻿namespace Finote_Web.ViewModels
 {
     public class LoginViewModel
     {
