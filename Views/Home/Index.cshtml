@@ -1,41 +1,42 @@
-﻿@{
+﻿@model Finote_Web.ViewModels.OverviewViewModel
+@{
     ViewData["Title"] = "Dashboard";
 }
 
 <!-- Main Dashboard Content -->
 <main>
     <div class="page-header">
-        <h1>Dashboard</h1>
+        <h1>Overview</h1>
         <p>Welcome back, Admin! Here's an overview of the application status.</p>
     </div>
 
-    <!-- Stats Cards Grid -->
+    <!-- Stats Cards Grid - Now using the ViewModel -->
     <div class="stats-grid">
         <div class="stat-card color-blue">
             <i class="fas fa-users"></i>
-            <h2>1,250</h2>
+            <h2>@Model.TotalUsers.ToString("N0")</h2>
             <p>Total Users</p>
         </div>
         <div class="stat-card color-yellow">
             <i class="fas fa-dollar-sign"></i>
-            <h2>$45,890</h2>
+            <h2>@Model.TotalRevenue.ToString("C0")</h2>
             <p>Total Revenue (This Month)</p>
         </div>
         <div class="stat-card color-lightblue">
             <i class="fas fa-receipt"></i>
-            <h2>8,430</h2>
+            <h2>@Model.TransactionsProcessed.ToString("N0")</h2>
             <p>Transactions Processed</p>
         </div>
         <div class="stat-card color-green">
             <i class="fas fa-user-plus"></i>
-            <h2>72</h2>
+            <h2>@Model.NewSignupsToday</h2>
             <p>New Signups (Today)</p>
         </div>
     </div>
 
     <!-- Main Content Area with Chart and Info Panel -->
     <div class="content-row">
-        <!-- Chart Container -->
+        <!-- Chart Container - The placeholder is replaced with a canvas -->
         <div class="chart-container">
             <div class="chart-header">
                 <h3>Financial Performance</h3>
@@ -44,13 +45,13 @@
                     <span class="legend-item expenses">Expenses</span>
                 </div>
             </div>
-            <div class="chart-placeholder">
-                <i class="fas fa-chart-line"></i>
-                <p>Chart Data Would Be Displayed Here</p>
+            <!-- Canvas for the chart -->
+            <div class="chart-wrapper">
+                <canvas id="financialChart"></canvas>
             </div>
         </div>
 
-        <!-- Side Info Panel -->
+        <!-- Side Info Panel (remains the same) -->
         <div class="info-panel">
             <h3>Quick Actions</h3>
             <div class="info-item">
@@ -72,3 +73,50 @@
         </div>
     </div>
 </main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('financialChart').getContext('2d');
+
+            // Get data from our C# ViewModel
+            const chartLabels = @Html.Raw(Json.Serialize(Model.ChartLabels));
+            const incomeData = @Html.Raw(Json.Serialize(Model.IncomeData));
+            const expenseData = @Html.Raw(Json.Serialize(Model.ExpenseData));
+
+            const financialChart = new Chart(ctx, {
+                type: 'line', // This will be a line chart
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: incomeData,
+                            borderColor: 'rgba(52, 152, 219, 1)',  // Solid blue
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true,
+                            tension: 0.3 // Makes the line curved
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenseData,
+                            borderColor: 'rgba(231, 76, 60, 1)',   // Solid red
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.3 // Makes the line curved
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+    </script>
+}

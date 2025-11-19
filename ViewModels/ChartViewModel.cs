@@ -7,8 +7,7 @@
         public string ChartIcon { get; set; } // e.g., "fas fa-chart-bar"
         public string ChartTitle { get; set; }
 
-        // In a real app, you'd have properties for chart labels and data
-        // public List<string> Labels { get; set; }
-        // public List<int> Data { get; set; }
+        public List<string> Labels { get; set; } = new();
+        public List<int> Data { get; set; } = new();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Finote_Web.ViewModels
+﻿using Finote_Web.ViewModels;
+
+namespace Finote_Web.ViewModels
 {
     // Represents a single user row in the table
     public class UserViewModel
@@ -13,11 +15,14 @@
     // The main model for the Account Management page
     public class AccountManagementViewModel
     {
-        public List<UserViewModel> Users { get; set; }
+        // For the list of existing users
+        public List<UserViewModel> Users { get; set; } = new();
 
-        public AccountManagementViewModel()
-        {
-            Users = new List<UserViewModel>();
-        }
+        // For the "Add New User" modal form
+        public AddUserViewModel NewUser { get; set; } = new();
+        // For the "Edit User" modal form
+        public EditUserViewModel EditUser { get; set; } = new();
+
     }
+
 }

@@ -1,0 +1,51 @@
+﻿@model Finote_Web.ViewModels.ChartViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+<main>
+    <div class="page-header">
+        <h1>@Model.PageTitle</h1>
+        <p>@Model.PageSubTitle</p>
+    </div>
+    <div class="content-card">
+        <!-- The canvas element is where Chart.js will draw the chart -->
+        <canvas id="myReportChart"></canvas>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get the canvas element
+            const ctx = document.getElementById('myReportChart').getContext('2d');
+
+            // --- Get data from our C# ViewModel ---
+            const chartLabels = @Html.Raw(Json.Serialize(Model.Labels));
+            const chartData = @Html.Raw(Json.Serialize(Model.Data));
+
+            // --- Create the chart ---
+            const myChart = new Chart(ctx, {
+                type: 'bar', // Đổi thành biểu đồ cột là 'bar', đường là ' line ', 'pie' là tròn, etc.
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: '@Model.PageTitle',
+                        data: chartData,
+                        backgroundColor: 'rgba(52, 152, 219, 0.5)', // A nice semi-transparent blue
+                        borderColor: 'rgba(52, 152, 219, 1)', // Solid blue border
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+    </script>
+}

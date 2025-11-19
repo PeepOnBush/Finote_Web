@@ -713,3 +713,121 @@ tbody tr:last-child td {
         color: #c0392b; /* Darker red */
         background-color: #fbeee
     }
+.modal {
+    display: none; /* ** VERY IMPORTANT: Hidden by default ** */
+    position: fixed; /* Stay in place */
+    z-index: 1001; /* Sit on top of everything else */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 5% from the top and centered horizontally */
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    width: 80%;
+    max-width: 700px;
+    /* Animation */
+    position: relative;
+    animation-name: animatetop;
+    animation-duration: 0.4s;
+}
+
+/* Add Animation */
+@keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    background-color: var(--sidebar-bg); /* Use theme color */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+/* The Close Button */
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+    .close-btn:hover,
+    .close-btn:focus {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+.modal-body {
+    padding: 2rem;
+}
+
+    .modal-body .form-row {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    }
+
+        .modal-body .form-row .form-group {
+            flex: 1;
+            min-width: 250px; /* Prevent fields from becoming too narrow */
+        }
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f1f1f1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.btn-secondary {
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+/* ================================================================ */
+/* ============= STYLES FOR DASHBOARD CHART ======================= */
+/* ================================================================ */
+
+/* Ensure the chart container has a minimum height */
+.chart-container {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+    /* Make the canvas grow to fill the container */
+    .chart-container canvas {
+        flex-grow: 1;
+    }
