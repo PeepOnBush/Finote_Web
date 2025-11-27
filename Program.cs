@@ -1,14 +1,33 @@
+﻿using Finote_Web.Models.Data;
+using Finote_Web.Repositories.Overview;
+using Finote_Web.Repositories.Transactions;
+using Finote_Web.Repositories.UserRepo;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore; // <-- Add this using statement
+//using Finote_Web.Models.Data; // <-- Add this using statement
+
 // This is an example assuming ASP.NET Core Identity with default settings.
 // Your file might have more services.
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add services to the container.
-// Example for ASP.NET Core Identity
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-//builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-//    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+
+//// ===== ADD THIS SECTION TO REGISTER YOUR DBCONTEXT =====
+builder.Services.AddDbContext<FinoteDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+
+// ===== ADD IDENTITY SERVICES HERE =====
+// This allows UserManager and RoleManager to be injected
+//Cấu hình Identity
+builder.Services.AddIdentity<Users, IdentityRole>()
+    .AddEntityFrameworkStores<FinoteDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IOverviewRepository, OverviewRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 builder.Services.AddControllersWithViews();
 

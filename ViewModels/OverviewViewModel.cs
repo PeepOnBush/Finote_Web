@@ -13,5 +13,6 @@
         public List<string> ChartLabels { get; set; } = new();
         public List<decimal> IncomeData { get; set; } = new();
         public List<decimal> ExpenseData { get; set; } = new();
+        public List<decimal> ProfitData { get; set; } = new();
     }
 }

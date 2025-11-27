@@ -36,7 +36,6 @@
                         <tr>
                             <td>
                                 <div class="user-profile">
-                                    <img src="@user.AvatarUrl" alt="User Avatar">
                                     <span>@user.FullName</span>
                                 </div>
                             </td>
@@ -45,7 +44,17 @@
                             <td class="actions-cell">
                                 <a href="#" class="action-btn edit-user-btn" data-id="@user.Id" title="Update"><i class="fas fa-pencil-alt"></i></a>
                                 <a href="#" class="action-btn" title="Details"><i class="fas fa-eye"></i></a>
-                                <a href="#" class="action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></a>
+
+                                <!-- ===== THIS IS THE FIX for the DELETE button ===== -->
+                                <!-- The form is now the button itself -->
+                                <form asp-action="DeleteUser" asp-controller="Home" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="action-btn delete-btn-style" title="Delete"
+                                            onclick="return confirm('Are you sure you want to delete the user @user.FullName?');">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                <!-- ============================================== -->
                             </td>
                         </tr>
                     }
@@ -67,13 +76,10 @@
         <div class="modal-body">
             <form asp-action="CreateUser" asp-controller="Home" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                <!-- Use the NewUser property from the main ViewModel -->
                 <div class="form-row">
                     <div class="form-group">
                         <label asp-for="NewUser.UserName"></label>
                         <input asp-for="NewUser.UserName" class="form-control" />
-                        <!-- NEW: This displays the validation error for UserName -->
                         <span asp-validation-for="NewUser.UserName" class="text-danger"></span>
                     </div>
                     <div class="form-group">
@@ -159,22 +165,30 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ===================================
-            // ======== ADD USER MODAL LOGIC ========
-            // ===================================
+
+            // ===================================================
+            // ============= ADD NEW USER MODAL LOGIC ============
+            // ===================================================
             const addUserModal = document.getElementById('addUserModal');
             const addUserBtn = document.getElementById('addUserBtn');
 
-            addUserBtn.addEventListener('click', () => { addUserModal.style.display = 'block'; });
+            if (addUserBtn) {
+                addUserBtn.addEventListener('click', () => {
+                    addUserModal.style.display = 'block';
+                });
+            }
 
-            // Show modal on validation error
-            if ('@ViewData["ShowModal"]' === 'True') {
+            // Check if the controller told us to show the modal (e.g., due to a validation error on submit)
+            // The C# value is rendered inside JavaScript string quotes
+            var showAddModal = '@ViewData["ShowModal"]';
+            if (showAddModal === 'True') {
                 addUserModal.style.display = 'block';
             }
 
-            // ===================================
-            // ======== EDIT USER MODAL LOGIC =======
-            // ===================================
+
+            // ===================================================
+            // =============== EDIT USER MODAL LOGIC =============
+            // ===================================================
             const editUserModal = document.getElementById('editUserModal');
             const editUserModalBody = document.getElementById('editUserModalBody');
             const editButtons = document.querySelectorAll('.edit-user-btn');
@@ -184,44 +198,71 @@
                     e.preventDefault();
                     const userId = this.getAttribute('data-id');
 
-                    // Show the modal with a loading state
-                    editUserModalBody.innerHTML = '<p>Loading...</p>';
+                    // Show the modal with a loading state first
+                    editUserModalBody.innerHTML = '<p style="text-align:center; padding: 2rem;">Loading...</p>';
                     editUserModal.style.display = 'block';
 
                     // Fetch the form content from our controller action
                     fetch(`/Home/GetUserForEdit?id=${userId}`)
-                        .then(response => response.text())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.text();
+                        })
                         .then(html => {
                             // Inject the returned partial view HTML into the modal body
                             editUserModalBody.innerHTML = html;
+
+                            // After the new form is loaded, we MUST find its specific cancel button
+                            // and attach a new event listener to it.
+                            const newCancelButton = editUserModalBody.querySelector('[data-dismiss="modal"]');
+                            if (newCancelButton) {
+                                newCancelButton.addEventListener('click', () => {
+                                    editUserModal.style.display = 'none';
+                                });
+                            }
                         })
                         .catch(error => {
-                            editUserModalBody.innerHTML = '<p>Error loading data. Please try again.</p>';
+                            editUserModalBody.innerHTML = '<p style="text-align:center; padding: 2rem; color: red;">Error loading data. Please try again.</p>';
                             console.error('Error fetching user data:', error);
                         });
                 });
             });
 
 
-            // ===================================
-            // ====== GENERAL MODAL CONTROLS =====
-            // ===================================
+            // ===================================================
+            // ============= DELETE USER LOGIC ===================
+            // ===================================================
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+
+          
+
+
+            // ===================================================
+            // =========== GENERAL MODAL CONTROLS ================
+            // ===================================================
             const allModals = document.querySelectorAll('.modal');
+
             allModals.forEach(modal => {
-                // Close button in the header
+                // Find the close button (the '×' in the header)
                 const closeBtn = modal.querySelector('.close-btn');
                 if(closeBtn) {
-                     closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+                     closeBtn.addEventListener('click', () => {
+                         modal.style.display = 'none';
+                     });
                 }
 
-                // Any button with [data-dismiss="modal"]
+                // Find any button with [data-dismiss="modal"] (like the "Cancel" button in the Add modal)
                 const cancelButtons = modal.querySelectorAll('[data-dismiss="modal"]');
                 cancelButtons.forEach(btn => {
-                    btn.addEventListener('click', () => { modal.style.display = 'none'; });
+                    btn.addEventListener('click', () => {
+                        modal.style.display = 'none';
+                    });
                 });
             });
 
-            // Close modal on outside click
+            // Add a single event listener to the window to handle clicking outside any modal
             window.addEventListener('click', function (event) {
                 allModals.forEach(modal => {
                     if (event.target == modal) {
@@ -229,6 +270,7 @@
                     }
                 });
             });
+
         });
     </script>
 }

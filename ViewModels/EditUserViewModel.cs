@@ -6,7 +6,7 @@ namespace Finote_Web.ViewModels
     public class EditUserViewModel
     {
         // Hidden field to know which user we are editing
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         // We show these but don't allow editing
         public string UserName { get; set; }
