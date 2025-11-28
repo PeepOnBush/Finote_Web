@@ -2,9 +2,11 @@
 //using Finote_Web.Models.Data;
 using Finote_Web.Models.Data;
 using Finote_Web.Repositories.Overview;
+using Finote_Web.Repositories.Permissions;
 using Finote_Web.Repositories.Transactions;
 using Finote_Web.Repositories.UserRepo;
 using Finote_Web.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +18,22 @@ namespace Finote_Web.Controllers
         private readonly IOverviewRepository _overviewRepo;
         private readonly IUserRepository _userRepo;
         private readonly ITransactionRepository _transactionRepo;
+        private readonly IPermissionsRepository _permissionsRepo;
+        private readonly UserManager<Users> _userManager;
 
         public HomeController(
             IOverviewRepository overviewRepo,
             IUserRepository userRepo,
-            ITransactionRepository transactionRepo)
+            ITransactionRepository transactionRepo,
+            IPermissionsRepository permissionsRepo, // <-- Add this
+            UserManager<Users> userManager)
         {
             _overviewRepo = overviewRepo;
             _userRepo = userRepo;
             _transactionRepo = transactionRepo;
+            _permissionsRepo = permissionsRepo; // <-- Add this
+            _userManager = userManager;
+
         }
 
         public async Task<IActionResult> Index()
@@ -100,6 +109,29 @@ namespace Finote_Web.Controllers
             await _userRepo.UpdateUserAsync(model);
             return RedirectToAction("AccountManagement");
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserRole(string userId, string newRole)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(newRole))
+            {
+                return BadRequest("User ID and new role are required.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Get the user's current roles
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            // Remove user from all current roles
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            // Add user to the new role
+            await _userManager.AddToRoleAsync(user, newRole);
+
+            return RedirectToAction("Permissions");
+        }
         // ===== NEW ACTION FOR DELETING A USER =====
         [HttpPost]
         public async Task<IActionResult> DeleteUser(string id)
@@ -157,23 +189,13 @@ namespace Finote_Web.Controllers
             return View("ReportChart", viewModel);
         }
 
-        public IActionResult Permissions()
+        public async Task<IActionResult> Permissions()
         {
             ViewData["CurrentPage"] = "Permissions";
-            var viewModel = new PermissionsViewModel
-            {
-                Roles = new List<RoleViewModel>
-                {
-                    new RoleViewModel { Name = "Admin", UserCount = 5 },
-                    new RoleViewModel { Name = "Editor", UserCount = 12 },
-                    new RoleViewModel { Name = "User", UserCount = 1233 }
-                },
-                ActivityLogs = new List<ActivityLogViewModel>
-                {
-                    new ActivityLogViewModel { UserEmail = "dai.dt@example.com", Action = "Logged in", Timestamp = DateTime.Now.AddMinutes(-5) },
-                    new ActivityLogViewModel { UserEmail = "nguyen.va@example.com", Action = "Updated user 'Tran Thi B'", Timestamp = DateTime.Now.AddMinutes(-10) }
-                }
-            };
+
+            // The controller is now incredibly simple. It just asks the repository for the data.
+            var viewModel = await _permissionsRepo.GetPermissionsDataAsync();
+
             return View(viewModel);
         }
 

@@ -13,6 +13,7 @@
     </div>
 
     <form asp-action="Login" asp-controller="Account" method="post">
+        @Html.AntiForgeryToken()
         <div class="form-group">
             <label asp-for="Email">Email Address</label>
             <input asp-for="Email" class="form-control" placeholder="Enter your email" required>

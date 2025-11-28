@@ -20,14 +20,13 @@
                 <i class="fas fa-search"></i>
                 <input type="search" placeholder="Search by note, category, or user...">
             </div>
-            <!-- The "Add New" button is not part of this feature, so it remains -->
-            <a href="#" class="btn-primary"><i class="fas fa-plus"></i> Add New Transaction</a>
         </div>
 
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>AMOUNT</th>
                         <th>CATEGORY</th>
                         <th>NOTE</th>
@@ -40,34 +39,41 @@
                 <tbody>
                     @foreach (var tx in Model.Transactions)
                     {
-                        <!-- ===== KEY CHANGES ARE IN THIS ROW ===== -->
+                        bool isExpense = new[] { 2, 3, 5 }.Contains(tx.TransactionTypeId);
+                        string typeString = isExpense ? "Expense" : "Income";
+
                         <tr id="row-@tx.Id"
                             data-state="visible"
                             data-amount="@tx.Amount.ToString("N2")"
-                            data-type="@tx.TransactionType"
+                            data-type="@typeString"
                             data-category="@tx.CategoryName"
                             data-note="@tx.Note"
                             data-user="@tx.UserName"
                             data-wallet="@tx.WalletName"
                             data-date="@tx.TransactionDate.ToString("yyyy-MM-dd")">
 
+                            <td>@tx.Id</td>
+
+                            <!-- ===== ADD SPECIFIC CLASSES TO EACH TD ===== -->
                             <td class="cell-amount">
                                 <span class="toggle-data">
-                                    <span class="amount @(tx.TransactionType == "Income" ? "income" : "expense")">
-                                        @(tx.TransactionType == "Income" ? "+ " : "- ")@tx.Amount.ToString("N2")
+                                    <span class="amount @(isExpense ? "expense" : "income")">
+                                        @(isExpense ? "- " : "+ ")@tx.Amount.ToString("N2")
                                     </span>
                                 </span>
                             </td>
-                            <td><span class="toggle-data">@tx.CategoryName</span></td>
-                            <td><span class="toggle-data">@tx.Note</span></td>
-                            <td><span class="toggle-data">@tx.UserName</span></td>
-                            <td><span class="toggle-data">@tx.WalletName</span></td>
-                            <td><span class="toggle-data">@tx.TransactionDate.ToString("yyyy-MM-dd")</span></td>
+                            <td class="cell-category"><span class="toggle-data">@tx.CategoryName</span></td>
+                            <td class="cell-note"><span class="toggle-data">@tx.Note</span></td>
+                            <td class="cell-user"><span class="toggle-data">@tx.UserName</span></td>
+                            <td class="cell-wallet"><span class="toggle-data">@tx.WalletName</span></td>
+                            <td class="cell-date"><span class="toggle-data">@tx.TransactionDate.ToString("yyyy-MM-dd")</span></td>
+                            <!-- ============================================= -->
+
                             <td class="actions-cell">
                                 <button type="button" class="action-btn toggle-visibility-btn" data-id="@tx.Id" title="Toggle Visibility">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                            </td>   
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -78,64 +84,59 @@
 
 @section Scripts {
     <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const toggleButtons = document.querySelectorAll('.toggle-visibility-btn');
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButtons = document.querySelectorAll('.toggle-visibility-btn');
 
-                    toggleButtons.forEach(button => {
-                        button.addEventListener('click', function() {
-                            const transactionId = this.getAttribute('data-id');
-                            const row = document.getElementById(`row-${transactionId}`);
-                            const icon = this.querySelector('i');
-                            const dataSpans = row.querySelectorAll('.toggle-data');
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const transactionId = this.getAttribute('data-id');
+                    const row = document.getElementById(`row-${transactionId}`);
+                    const icon = this.querySelector('i');
+                    const dataSpans = row.querySelectorAll('.toggle-data');
 
-                            if (!row || !icon || dataSpans.length === 0) {
-                                console.error('Could not find required elements for transaction ID:', transactionId);
-                                return;
-                            }
+                    if (!row || !icon || dataSpans.length === 0) {
+                        return; // Exit if elements are missing
+                    }
 
-                            const currentState = row.getAttribute('data-state');
+                    const currentState = row.getAttribute('data-state');
 
-                            if (currentState === 'visible') {
-                                // --- HIDE THE DATA ---
-                                // Simply replace the content of each target span with asterisks
-                                dataSpans.forEach(span => {
-                                    span.textContent = '****';
-                                });
-
-                                icon.classList.remove('fa-eye');
-                                icon.classList.add('fa-eye-slash');
-                                row.setAttribute('data-state', 'hidden');
-                            } else {
-                                // --- SHOW THE DATA ---
-                                // Get all original data from the row's data-* attributes
-                                const amount = row.getAttribute('data-amount');
-                                const type = row.getAttribute('data-type');
-                                const category = row.getAttribute('data-category');
-                                const note = row.getAttribute('data-note');
-                                const user = row.getAttribute('data-user');
-                                const wallet = row.getAttribute('data-wallet');
-                                const date = row.getAttribute('data-date');
-
-                                // Reconstruct the formatted amount HTML
-                                const sign = type === 'Income' ? '+ ' : '- ';
-                                const amountClass = type === 'Income' ? 'income' : 'expense';
-                                const amountHtml = `<span class="amount ${amountClass}">${sign}${amount}</span>`;
-
-                                // Restore the original content by finding the correct span
-                                // This approach is more robust
-                                row.querySelector('.cell-amount .toggle-data').innerHTML = amountHtml;
-                                row.querySelector('td:nth-child(2) .toggle-data').textContent = category;
-                                row.querySelector('td:nth-child(3) .toggle-data').textContent = note;
-                                row.querySelector('td:nth-child(4) .toggle-data').textContent = user;
-                                row.querySelector('td:nth-child(5) .toggle-data').textContent = wallet;
-                                row.querySelector('td:nth-child(6) .toggle-data').textContent = date;
-
-                                icon.classList.remove('fa-eye-slash');
-                                icon.classList.add('fa-eye');
-        -                        row.setAttribute('data-state', 'visible');
-                            }
+                    if (currentState === 'visible') {
+                        // --- HIDE THE DATA ---
+                        dataSpans.forEach(span => {
+                            span.textContent = '****';
                         });
-                    });
+
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                        row.setAttribute('data-state', 'hidden');
+                    } else {
+                        // --- SHOW THE DATA (THE CORRECTED LOGIC) ---
+                        const amount = row.getAttribute('data-amount');
+                        const type = row.getAttribute('data-type');
+                        const category = row.getAttribute('data-category');
+                        const note = row.getAttribute('data-note');
+                        const user = row.getAttribute('data-user');
+                        const wallet = row.getAttribute('data-wallet');
+                        const date = row.getAttribute('data-date');
+
+                        const sign = type === 'Income' ? '+ ' : '- ';
+                        const amountClass = type === 'Income' ? 'income' : 'expense';
+                        const amountHtml = `<span class="amount ${amountClass}">${sign}${amount}</span>`;
+
+                        // Use the specific classes to restore data to the correct cells
+                        row.querySelector('.cell-amount .toggle-data').innerHTML = amountHtml;
+                        row.querySelector('.cell-category .toggle-data').textContent = category;
+                        row.querySelector('.cell-note .toggle-data').textContent = note;
+                        row.querySelector('.cell-user .toggle-data').textContent = user;
+                        row.querySelector('.cell-wallet .toggle-data').textContent = wallet;
+                        row.querySelector('.cell-date .toggle-data').textContent = date;
+
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                        row.setAttribute('data-state', 'visible');
+                    }
                 });
+            });
+        });
     </script>
 }

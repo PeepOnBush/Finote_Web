@@ -26,15 +26,16 @@ namespace Finote_Web.Repositories.Transactions
                     Id = t.TransactionId,
                     Amount = t.Amount,
                     CategoryName = t.Category.CategoryName,
-                    TransactionType = t.Category.TransactionType.TransactionTypeName,
+                    TransactionTypeId = t.Category.TransactionTypeId,
                     Note = t.Note,
                     TransactionDate = t.TransactionTime,
                     WalletName = t.Wallet.WalletName,
                     UserName = t.CreatedByUser.UserName ?? "N/A"
                 }).ToListAsync();
 
-            var totalIncome = transactions.Where(t => t.TransactionType == "Income").Sum(t => t.Amount);
-            var totalExpense = transactions.Where(t => t.TransactionType == "Expense").Sum(t => t.Amount);
+            var expenseTypeIds = new List<int> { 2, 3, 5 };
+            var totalIncome = transactions.Where(t => !expenseTypeIds.Contains(t.TransactionTypeId)).Sum(t => t.Amount);
+            var totalExpense = transactions.Where(t => expenseTypeIds.Contains(t.TransactionTypeId)).Sum(t => t.Amount);
 
             return new TransactionManagementViewModel
             {

@@ -6,7 +6,7 @@
         public int Id { get; set; }
         public decimal Amount { get; set; }
         public string CategoryName { get; set; }
-        public string TransactionType { get; set; } // "Income" or "Expense"
+        public int TransactionTypeId { get; set; }
         public string Note { get; set; }
         public DateTime TransactionDate { get; set; }
         public string WalletName { get; set; }

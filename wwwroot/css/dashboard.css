@@ -561,20 +561,34 @@ tbody tr:last-child td {
     left: 0;
     width: 100%;
     padding: 20px 25px;
+    padding: 15px; /* Give the footer area some padding */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+    .sidebar-footer form {
+        margin: 0;
+    }
 
 .logout-btn {
+    /* --- 1. Reset all default button styles --- */
+    background: transparent;
+    border: none;
+    margin: 0;
+    padding: 10px 15px; /* Add padding to make the clickable area larger */
+    width: 100%;
+    cursor: pointer;
+    /* --- 2. Apply the styles from our other sidebar links --- */
+    color: var(--sidebar-text); /* This fixes the invisible text problem */
     display: flex;
     align-items: center;
     gap: 15px;
-    text-decoration: none;
-    color: var(--sidebar-text);
-    padding: 10px;
+    font-size: 1rem; /* Ensure font size is consistent */
+    font-family: inherit; /* Use the same font as the rest of the page */
+    text-align: left;
     border-radius: 8px;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+    /* --- 3. Add the hover effect --- */
     .logout-btn:hover {
         background-color: var(--sidebar-hover-bg);
         color: white;

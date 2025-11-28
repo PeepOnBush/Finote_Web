@@ -47,7 +47,13 @@
             </li>
         </ul>
         <div class="sidebar-footer">
-            <a asp-controller="Account" asp-action="Login" class="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
     </aside>
 
