@@ -1,5 +1,6 @@
 ﻿using Finote_Web.Models;
 using Finote_Web.Models.Data;
+using Finote_Web.Repositories.Logging;
 using Finote_Web.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,11 +12,12 @@ namespace Finote_Web.Repositories.UserRepo
     {
         private readonly FinoteDbContext _context;
         private readonly UserManager<Users> _userManager; // <-- Inject UserManager
-
-        public UserRepository(FinoteDbContext context, UserManager<Users> userManager)
+        private readonly IActivityLogRepository _logRepository;
+        public UserRepository(FinoteDbContext context, UserManager<Users> userManager, IActivityLogRepository logRepository)
         {
             _context = context;
             _userManager = userManager;
+            _logRepository = logRepository; 
         }
 
         public async Task<IEnumerable<UserViewModel>> GetAllUsersAsync()
@@ -54,8 +56,9 @@ namespace Finote_Web.Repositories.UserRepo
             if (result.Succeeded)
             {
                 // Assign the selected role to the new user
-                await _userManager.AddToRoleAsync(user, newUser.SelectedRole);
-            }
+                await _userManager.AddToRoleAsync(user, newUser.SelectedRole); 
+                await _logRepository.LogActivityAsync(user.Id, $"Account '{user.UserName}' Created");
+            }  
             else
             {
                 // If creation fails, throw an exception to be caught by the controller

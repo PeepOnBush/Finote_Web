@@ -11,5 +11,7 @@ namespace Finote_Web.Models.Data
         public ICollection<Wallet>? Wallets { get; set; }
         public ICollection<UserWalletParticipant>? UserWalletParticipants { get; set; }
         public ICollection<UserNotification>? UserNotifications { get; set; }
+        public ICollection<ActivityLog> ActivityLogs { get; set; }
+
     }
 }

@@ -14,11 +14,13 @@ namespace Finote_Web.Repositories.Permissions
         // =======================
         private readonly UserManager<Users> _userManager;
 
+        private readonly FinoteDbContext _context;
         // ===== AND CHANGE THIS =====
-        public PermissionsRepository(RoleManager<IdentityRole> roleManager, UserManager<Users> userManager)
+        public PermissionsRepository(RoleManager<IdentityRole> roleManager, UserManager<Users> userManager, FinoteDbContext context)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<PermissionsViewModel> GetPermissionsDataAsync()
@@ -48,14 +50,26 @@ namespace Finote_Web.Repositories.Permissions
 
             // --- NEW: List of available roles for dropdowns ---
             var availableRoles = allRoles.Select(r => new SelectListItem { Value = r.Name, Text = r.Name }).ToList();
-
+            var activityLogs = await _context.ActivityLogs
+               .Include(log => log.User) // Join with the Users table
+               .OrderByDescending(log => log.Timestamp) // Show newest first
+               .Take(50) // Limit to the last 50 logs for performance
+               .Select(log => new ActivityLogViewModel
+               {
+                   Id = log.Id,
+                   UserName = log.User.UserName,
+                   Action = log.Action,
+                   Timestamp = log.Timestamp.ToLocalTime() // Convert from UTC to local time for display
+               })
+               .ToListAsync();
             var viewModel = new PermissionsViewModel
             {
                 Roles = roleViewModels,
                 UsersWithRoles = usersWithRoles, // Add the new data
-                AvailableRoles = availableRoles   // Add the dropdown options
+                AvailableRoles = availableRoles,   // Add the dropdown options
+                ActivityLogs = activityLogs
             };
-
+            
             return viewModel;
         }
     }

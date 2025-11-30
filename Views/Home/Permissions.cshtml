@@ -94,18 +94,26 @@
 
         <!-- Tab 4: Activity Log -->
         <div class="tab-content" id="logs">
-            <h4>Activity Log (Log truy cập)</h4>
+            <h4>Nhật ký hoạt động (Activity Log)</h4>
             <p>A log of important actions taken by users.</p>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>USER</th><th>ACTION</th><th>TIMESTAMP</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @foreach (var log in Model.ActivityLogs)
                         {
                             <tr>
-                                <td>@log.UserEmail</td>
+                                <td>@log.Id</td>
+                                <td>@log.UserName</td>
                                 <td>@log.Action</td>
-                                <td>@log.Timestamp.ToString("yyyy-MM-dd h:mm tt")</td>
+                                <td>@log.Timestamp.ToString("g")</td>
                             </tr>
                         }
                     </tbody>

@@ -11,7 +11,8 @@ namespace Finote_Web.ViewModels
     // Represents an entry in the activity log tab
     public class ActivityLogViewModel
     {
-        public string UserEmail { get; set; }
+        public int Id { get; set; }
+        public string UserName { get; set; }
         public string Action { get; set; }
         public DateTime Timestamp { get; set; }
     }
@@ -29,11 +30,10 @@ namespace Finote_Web.ViewModels
         public List<UserRoleViewModel> UsersWithRoles { get; set; } = new();
         public List<SelectListItem> AvailableRoles { get; set; } = new();
 
-        public List<ActivityLogViewModel> ActivityLogs { get; set; }
+        public List<ActivityLogViewModel> ActivityLogs { get; set; } = new();
         // Add more properties here for the other tabs as needed
 
 
-    
 
         public PermissionsViewModel()
         {

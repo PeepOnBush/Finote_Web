@@ -1,5 +1,6 @@
 ﻿using Finote_Web.Models.Data;
 using Finote_Web.Permissions;
+using Finote_Web.Repositories.Logging;
 using Finote_Web.Repositories.Overview;
 using Finote_Web.Repositories.Permissions;
 using Finote_Web.Repositories.Transactions;
@@ -42,6 +43,7 @@ builder.Services.AddScoped<IOverviewRepository, OverviewRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPermissionsRepository, PermissionsRepository>();
+builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
 
 // 5. Add MVC services
 builder.Services.AddControllersWithViews();

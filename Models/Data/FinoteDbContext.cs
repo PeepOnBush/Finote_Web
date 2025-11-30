@@ -23,6 +23,7 @@ namespace Finote_Web.Models.Data
         public DbSet<WalletRole> WalletRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -223,6 +224,11 @@ namespace Finote_Web.Models.Data
             builder.Entity<WalletRole>()
                 .Property(r => r.WalletRoleName)
                 .HasColumnType("nvarchar(128)");
+            builder.Entity<ActivityLog>()
+                .HasOne(al => al.User)
+                .WithMany(u => u.ActivityLogs) // We need to add this collection to the Users class
+                .HasForeignKey(al => al.UserId)
+                .OnDelete(DeleteBehavior.Cascade); // If a user is deleted, their logs are also deleted.
         }
     }
 }
