@@ -6,12 +6,15 @@ using Finote_Web.Repositories.Permissions;
 using Finote_Web.Repositories.Transactions;
 using Finote_Web.Repositories.UserRepo;
 using Finote_Web.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 namespace Finote_Web.Controllers
 {
+
+    [Authorize]
     public class HomeController : Controller
     {
         // Inject the repository interfaces, NOT the DbContext
@@ -43,7 +46,8 @@ namespace Finote_Web.Controllers
             var viewModel = await _overviewRepo.GetOverviewDataAsync();
             return View(viewModel);
         }
-
+          
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AccountManagement()
         {
             ViewData["CurrentPage"] = "AccountManagement";
@@ -65,20 +69,29 @@ namespace Finote_Web.Controllers
             return View(viewModel);
 
         }
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateUser(AddUserViewModel newUser)
         {
-            var users = await _userRepo.GetAllUsersAsync();
-
             if (!ModelState.IsValid)
             {
-                // Re-render the page with validation errors
                 ViewData["CurrentPage"] = "AccountManagement";
                 ViewData["ShowModal"] = true;
+
+                // --- THIS IS THE FIX ---
+                // You must repopulate the dropdown list before returning the view
+                newUser.AvailableRoles = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "Admin", Text = "Admin" },
+            new SelectListItem { Value = "Editor", Text = "Editor" },
+            new SelectListItem { Value = "User", Text = "User" }
+        };
+
+                var users = await _userRepo.GetAllUsersAsync();
                 var viewModel = new AccountManagementViewModel
                 {
                     Users = users.ToList(),
-                    NewUser = newUser // Pass back the invalid model
+                    NewUser = newUser
                 };
                 return View("AccountManagement", viewModel);
             }
@@ -87,6 +100,8 @@ namespace Finote_Web.Controllers
             return RedirectToAction("AccountManagement");
         }
 
+
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetUserForEdit(string id) // Changed to string
         {
@@ -96,7 +111,18 @@ namespace Finote_Web.Controllers
             return PartialView("_EditUserPartial", userToEdit);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetUserDetails(string id)
+        {
+            var userDetails = await _userRepo.GetUserDetailsAsync(id);
+            if (userDetails == null) return NotFound();
+
+            return PartialView("~/Views/Home/Partials/_UserDetailsPartial.cshtml", userDetails);
+        }
+
         // ===== NEW ACTION TO PROCESS THE EDIT FORM SUBMISSION =====
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> UpdateUser(EditUserViewModel model)
         {
@@ -109,6 +135,7 @@ namespace Finote_Web.Controllers
             await _userRepo.UpdateUserAsync(model);
             return RedirectToAction("AccountManagement");
         }
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> UpdateUserRole(string userId, string newRole)
         {
@@ -132,6 +159,20 @@ namespace Finote_Web.Controllers
 
             return RedirectToAction("Permissions");
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        // Change the parameter name from "rolePermissions" to "model"
+        public async Task<IActionResult> UpdateRolePermissions(List<PermissionViewModel> model)
+        {
+            foreach (var rolePermission in model)
+            {
+                await _permissionsRepo.UpdateRolePermissionsAsync(rolePermission);
+            }
+
+            return RedirectToAction("Permissions");
+        }
+
+        [Authorize(Roles = "Admin")]
         // ===== NEW ACTION FOR DELETING A USER =====
         [HttpPost]
         public async Task<IActionResult> DeleteUser(string id)
@@ -143,6 +184,8 @@ namespace Finote_Web.Controllers
             await _userRepo.DeleteUserAsync(id);
             return RedirectToAction("AccountManagement");
         }
+
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> TransactionManagement()
         {
             ViewData["CurrentPage"] = "TransactionManagement";
@@ -150,6 +193,13 @@ namespace Finote_Web.Controllers
             return View(viewModel);
 
         }
+
+        //[HttpGet] // Renamed for clarity
+        //public IActionResult Statistics()
+        //{
+        //    // This could be a landing page for all reports
+        //    return RedirectToAction("ReportUsers");
+        //}
         public IActionResult ReportUsers()
         {
             ViewData["CurrentPage"] = "Statistics";
@@ -189,6 +239,7 @@ namespace Finote_Web.Controllers
             return View("ReportChart", viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Permissions()
         {
             ViewData["CurrentPage"] = "Permissions";
@@ -198,7 +249,7 @@ namespace Finote_Web.Controllers
 
             return View(viewModel);
         }
-
+        [Authorize(Roles = "Admin")]
         public IActionResult Settings()
         {
             ViewData["CurrentPage"] = "Settings";

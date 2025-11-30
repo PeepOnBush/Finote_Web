@@ -1,0 +1,35 @@
+﻿@model Finote_Web.ViewModels.UserDetailsViewModel
+
+<div class="user-details">
+    <div class="detail-row">
+        <strong>User ID:</strong>
+        <span>@Model.Id</span>
+    </div>
+    <div class="detail-row">
+        <strong>Username:</strong>
+        <span>@Model.UserName</span>
+    </div>
+    <div class="detail-row">
+        <strong>Email:</strong>
+        <span>@Model.Email (@(Model.EmailConfirmed ? "Confirmed" : "Not Confirmed"))</span>
+    </div>
+    <div class="detail-row">
+        <strong>Full Name:</strong>
+        <span>@Model.FullName</span>
+    </div>
+    <div class="detail-row">
+        <strong>Phone:</strong>
+        <span>@Model.PhoneNumber</span>
+    </div>
+    <div class="detail-row">
+        <strong>Role:</strong>
+        <span>@Model.Role</span>
+    </div>
+    <div class="detail-row">
+        <strong>Lockout End:</strong>
+        <span>@(Model.LockoutEnd?.ToString() ?? "Not Locked")</span>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn-secondary" data-dismiss="modal">Close</button>
+</div>

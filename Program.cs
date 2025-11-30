@@ -7,7 +7,7 @@ using Finote_Web.Repositories.Transactions;
 using Finote_Web.Repositories.UserRepo;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using Finote_Web.Permissions;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Configure DbContext

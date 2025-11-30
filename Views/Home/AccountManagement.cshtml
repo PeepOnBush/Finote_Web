@@ -43,7 +43,8 @@
                             <td><span class="role-badge role-@(user.Role.ToLower())">@user.Role</span></td>
                             <td class="actions-cell">
                                 <a href="#" class="action-btn edit-user-btn" data-id="@user.Id" title="Update"><i class="fas fa-pencil-alt"></i></a>
-                                <a href="#" class="action-btn" title="Details"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="action-btn details-user-btn" data-id="@user.Id" title="Details"><i class="fas fa-eye"></i></a>
+
 
                                 <!-- ===== THIS IS THE FIX for the DELETE button ===== -->
                                 <!-- The form is now the button itself -->
@@ -162,6 +163,17 @@
         </div>
     </div>
 </div>
+<div id="userDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>User Details</h2>
+            <span class="close-btn">&times;</span>
+        </div>
+        <div class="modal-body" id="userDetailsModalBody">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -271,6 +283,31 @@
                 });
             });
 
+        });
+        const userDetailsModal = document.getElementById('userDetailsModal');
+        const userDetailsModalBody = document.getElementById('userDetailsModalBody');
+        const detailButtons = document.querySelectorAll('.details-user-btn');
+
+        detailButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const userId = this.getAttribute('data-id');
+
+                userDetailsModalBody.innerHTML = '<p>Loading...</p>';
+                userDetailsModal.style.display = 'block';
+
+                fetch(`/Home/GetUserDetails?id=${userId}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        userDetailsModalBody.innerHTML = html;
+                        const newCancelButton = userDetailsModalBody.querySelector('[data-dismiss="modal"]');
+                        if (newCancelButton) {
+                            newCancelButton.addEventListener('click', () => {
+                                userDetailsModal.style.display = 'none';
+                            });
+                        }
+                    });
+            });
         });
     </script>
 }

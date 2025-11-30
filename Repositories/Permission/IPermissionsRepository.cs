@@ -6,5 +6,7 @@ namespace Finote_Web.Repositories.Permissions
     public interface IPermissionsRepository
     {
         Task<PermissionsViewModel> GetPermissionsDataAsync();
+        Task UpdateRolePermissionsAsync(PermissionViewModel model);
+
     }
 }

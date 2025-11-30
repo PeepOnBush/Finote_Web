@@ -1,0 +1,12 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Use the main layout so the sidebar is visible
+}
+
+<div class="access-denied-overlay">
+    <div class="access-denied-box">
+        <h2>Access Denied</h2>
+        <p>You do not have permission to view this page.</p>
+        <a asp-controller="Home" asp-action="Index" class="btn-primary">Go to Overview</a>
+    </div>
+</div>

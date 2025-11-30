@@ -877,3 +877,33 @@ tbody tr:last-child td {
     .toggle-visibility-btn:hover {
         color: var(--sidebar-active-highlight);
     }
+.user-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+    .user-details .detail-row strong {
+        color: #555;
+    }
+.access-denied-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.access-denied-box {
+    background: white;
+    padding: 2rem 3rem;
+    border-radius: 10px;
+    text-align: center;
+}

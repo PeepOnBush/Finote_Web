@@ -46,10 +46,66 @@
 
         <!-- Tab 2: Edit Permissions (static for now) -->
         <div class="tab-content" id="permissions">
-            <h4>Edit Permissions</h4>
-            <p>Define what each role can see and do.</p>
-            <!-- Placeholder content -->
+            <h4>Chỉnh sửa quyền (Edit Permissions)</h4>
+            <p>Define which roles have access to specific pages.</p>
+            <div class="table-wrapper">
+                <form asp-action="UpdateRolePermissions" asp-controller="Home" method="post">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PAGE / FEATURE</th>
+                                <!-- 1. Dynamically create a header for each role -->
+                                @for (int i = 0; i < Model.RolePermissions.Count; i++)
+                                {
+                                    <th>@Model.RolePermissions[i].RoleName.ToUpper()</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 2. Loop through the permissions of the FIRST role to create the rows -->
+                            <!-- This assumes all roles are being checked against the same set of permissions -->
+                            @for (int i = 0; i < Model.RolePermissions.FirstOrDefault()?.RoleClaims.Count; i++)
+                            {
+                                <tr>
+                                    <!-- 3. Display the permission name -->
+                                    <td>
+                                        @{
+                                            // Prettify the claim name for display
+                                            var claimParts = Model.RolePermissions[0].RoleClaims[i].ClaimType.Split('.');
+                                            var feature = claimParts.Length > 1 ? claimParts[1] : "";
+                                            var action = claimParts.Length > 2 ? claimParts[2] : "";
+                                        }
+                                        <strong>@feature</strong>
+                                        <span style="color: #777; margin-left: 5px;">(@action)</span>
+                                    </td>
+
+                                    <!-- 4. For each role, create the corresponding checkbox -->
+                                    @for (int j = 0; j < Model.RolePermissions.Count; j++)
+                                    {
+                                        <td>
+                                            <!-- Hidden fields are crucial for the model binder to rebuild the list on POST -->
+                                            <input type="hidden" name="model[@j].RoleName" value="@Model.RolePermissions[j].RoleName" />
+                                            <input type="hidden" name="model[@j].RoleClaims[@i].ClaimType" value="@Model.RolePermissions[j].RoleClaims[i].ClaimType" />
+
+                                            <!-- The actual checkbox -->
+                                            <input type="checkbox" name="model[@j].RoleClaims[@i].IsSelected" value="true"
+                                                   checked="@Model.RolePermissions[j].RoleClaims[i].IsSelected"
+                                                   disabled="@(Model.RolePermissions[j].RoleName == "Admin")" />
+                                            <!-- We also need a hidden field for the 'false' value of the checkbox -->
+                                            <input type="hidden" name="model[@j].RoleClaims[@i].IsSelected" value="false" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="modal-footer" style="background:none; padding-right:0;">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
+
 
         <!-- Tab 3: Assign Role (static for now) -->
         <div class="tab-content" id="assign">

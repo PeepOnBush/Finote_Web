@@ -39,7 +39,30 @@ namespace Finote_Web.Repositories.UserRepo
             }
             return userViewModels;
         }
+        public async Task<UserDetailsViewModel> GetUserDetailsAsync(string id)
+        {
+            var user = await _userManager.Users
+                .Include(u => u.UserInfomation)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
+            if (user == null) return null;
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new UserDetailsViewModel
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                FullName = user.UserInfomation?.FullName ?? "N/A",
+                Gender = user.UserInfomation?.Gender ?? "N/A",
+                DateOfBirth = user.UserInfomation?.DateOfBirth.ToString() ?? "N/A",
+                Role = roles.FirstOrDefault() ?? "No Role",
+                EmailConfirmed = user.EmailConfirmed,
+                LockoutEnd = user.LockoutEnd
+            };
+        }
         public async Task CreateUserAsync(AddUserViewModel newUser)
         {
             var user = new Users

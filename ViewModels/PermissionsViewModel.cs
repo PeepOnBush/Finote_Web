@@ -7,7 +7,17 @@ namespace Finote_Web.ViewModels
         public string Name { get; set; }
         public int UserCount { get; set; }
     }
+    public class PermissionViewModel
+    {
+        public string RoleName { get; set; }
+        public List<RoleClaimViewModel> RoleClaims { get; set; }
+    }
 
+    public class RoleClaimViewModel
+    {
+        public string ClaimType { get; set; }
+        public bool IsSelected { get; set; }
+    }
     // Represents an entry in the activity log tab
     public class ActivityLogViewModel
     {
@@ -29,6 +39,7 @@ namespace Finote_Web.ViewModels
         public List<RoleViewModel> Roles { get; set; }
         public List<UserRoleViewModel> UsersWithRoles { get; set; } = new();
         public List<SelectListItem> AvailableRoles { get; set; } = new();
+        public List<PermissionViewModel> RolePermissions { get; set; } = new();
 
         public List<ActivityLogViewModel> ActivityLogs { get; set; } = new();
         // Add more properties here for the other tabs as needed
