@@ -103,6 +103,10 @@ namespace Finote_Web.Repositories.Permissions
         }
         public async Task UpdateRolePermissionsAsync(PermissionViewModel model)
         {
+            if (model.RoleName == "Admin")
+            {
+                return;
+            }
             var role = await _roleManager.FindByNameAsync(model.RoleName);
             if (role == null) throw new ApplicationException("Role not found.");
 

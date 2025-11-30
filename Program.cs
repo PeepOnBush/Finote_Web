@@ -24,7 +24,26 @@ builder.Services.AddIdentity<Users, IdentityRole>(options =>
     .AddEntityFrameworkStores<FinoteDbContext>()
     .AddDefaultTokenProviders();
 
-// 3. ===== THIS IS THE KEY: CONFIGURE THE AUTHENTICATION COOKIE =====
+// ===== DEFINE AUTHORIZATION POLICIES =====
+builder.Services.AddAuthorization(options =>
+{
+    // Policy for the Overview page
+    options.AddPolicy("CanViewOverview", policy =>
+        policy.RequireClaim(AppPermissions.ViewOverview, "true"));
+
+    // Policy for the Statistics page
+    options.AddPolicy("CanViewStatistics", policy =>
+        policy.RequireClaim(AppPermissions.ViewStatistics, "true"));
+
+    // Policy for the Account Management page
+    options.AddPolicy("CanAccessAccountManagement", policy =>
+        policy.RequireClaim(AppPermissions.AccessAccountManagement, "true"));
+
+    // Policy for the Transaction Management page
+    options.AddPolicy("CanAccessTransactionManagement", policy =>
+        policy.RequireClaim(AppPermissions.AccessTransactionManagement, "true"));
+});
+// 3. ===== CONFIGURE THE AUTHENTICATION COOKIE =====
 builder.Services.ConfigureApplicationCookie(options =>
 {
     // If a user tries to access a protected page and is not logged in,

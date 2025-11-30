@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -22,35 +24,64 @@
                 string currentPage = ViewData["CurrentPage"] as string ?? "";
             }
 
-            <li class="sidebar-nav-item @(currentPage == "Overview" ? "active" : "")">
-                <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i><span>Overview</span></a>
-            </li>
-            <li class="sidebar-nav-item @(currentPage == "Statistics" ? "active" : "")">
-                <a class="sidebar-dropdown-toggle" href="#"><i class="fas fa-chart-bar"></i><span>Statistics & Reports</span><i class="fas fa-chevron-right dropdown-arrow"></i></a>
-                <ul class="sidebar-dropdown-menu">
-                    <li><a asp-controller="Home" asp-action="ReportUsers">User Reports</a></li>
-                    <li><a asp-controller="Home" asp-action="ReportNotesWallets">Notes and wallets Reports</a></li>
-                    <li><a asp-controller="Home" asp-action="ReportAiUsage">AI usage Reports</a></li>
-                </ul>
-            </li>
+            <!-- ============================================= -->
+            <!-- ==== DYNAMIC, POLICY-BASED SIDEBAR LINKS ==== -->
+            <!-- ============================================= -->
+            <!-- Link for Overview -->
+            @if ((await AuthorizationService.AuthorizeAsync(User, "CanViewOverview")).Succeeded)
+            {
+                <li class="sidebar-nav-item @(currentPage == "Dashboard" ? "active" : "")">
+                    <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i><span>Overview</span></a>
+                </li>
+            }
 
-            <!-- ===== ROLE-BASED ACCESS CONTROL ===== -->
-            @if (User.IsInRole("Admin"))
+            <!-- Link for Statistics & Reports -->
+            @if ((await AuthorizationService.AuthorizeAsync(User, "CanViewStatistics")).Succeeded)
+            {
+                <li class="sidebar-nav-item @(currentPage == "Statistics" ? "active" : "")">
+                    <a class="sidebar-dropdown-toggle" href="#"><i class="fas fa-chart-bar"></i><span>Statistics & Reports</span><i class="fas fa-chevron-right dropdown-arrow"></i></a>
+                    <ul class="sidebar-dropdown-menu">
+                        <li><a asp-controller="Home" asp-action="ReportUsers">User Reports</a></li>
+                        <li><a asp-controller="Home" asp-action="ReportNotesWallets">Notes and wallets Reports</a></li>
+                        <li><a asp-controller="Home" asp-action="ReportAiUsage">AI usage Reports</a></li>
+                    </ul>
+                </li>
+            }
+
+            <!-- Link for Account Management -->
+            @if ((await AuthorizationService.AuthorizeAsync(User, "CanAccessAccountManagement")).Succeeded)
             {
                 <li class="sidebar-nav-item @(currentPage == "AccountManagement" ? "active" : "")">
                     <a asp-controller="Home" asp-action="AccountManagement"><i class="fas fa-users-cog"></i><span>Account Management</span></a>
                 </li>
+            }
+
+            <!-- Link for Transaction Management -->
+            @if ((await AuthorizationService.AuthorizeAsync(User, "CanAccessTransactionManagement")).Succeeded)
+            {
                 <li class="sidebar-nav-item @(currentPage == "TransactionManagement" ? "active" : "")">
                     <a asp-controller="Home" asp-action="TransactionManagement"><i class="fas fa-exchange-alt"></i><span>Transaction Management</span></a>
                 </li>
+            }
+
+            <!-- Link for Authorization & Security (Permissions) -->
+            <!-- Since only Admins should ever see this, we can use a simpler role check -->
+            @if (User.IsInRole("Admin"))
+            {
                 <li class="sidebar-nav-item @(currentPage == "Permissions" ? "active" : "")">
                     <a asp-controller="Home" asp-action="Permissions"><i class="fas fa-shield-alt"></i><span>Authorization & Security</span></a>
                 </li>
+            }
+
+            <!-- Link for System Settings -->
+            <!-- This is also likely an Admin-only page -->
+            @if (User.IsInRole("Admin"))
+            {
                 <li class="sidebar-nav-item @(currentPage == "Settings" ? "active" : "")">
                     <a asp-controller="Home" asp-action="Settings"><i class="fas fa-cog"></i><span>System Settings</span></a>
                 </li>
             }
-            <!-- ======================================= -->
+
         </ul>
         <div class="sidebar-footer">
             <form asp-controller="Account" asp-action="Logout" method="post">
