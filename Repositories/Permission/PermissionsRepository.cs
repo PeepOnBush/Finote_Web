@@ -124,5 +124,10 @@ namespace Finote_Web.Repositories.Permissions
                 await _roleManager.AddClaimAsync(role, new Claim(claim.ClaimType, "true"));
             }
         }
+        public async Task ClearActivityLogAsync()
+        {
+            // A very efficient way to delete all rows from a table
+            await _context.ActivityLogs.ExecuteDeleteAsync();
+        }
     }
 }

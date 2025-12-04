@@ -1,9 +1,9 @@
 ﻿using Finote_Web.Permissions;
 using Microsoft.AspNetCore.Identity;
-using System.Reflection; 
-using System.Security.Claims; 
+using System.Reflection;
+using System.Security.Claims;
 
-namespace Finote_Web.Permissions
+namespace Finote_Web.Seeders
 {
     public static class RoleSeeder
     {

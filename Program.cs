@@ -1,19 +1,21 @@
-﻿using Finote_Web.Models.Data;
+﻿using Finote_API.Services.SendEmail;
+using Finote_Web.Models.Data;
 using Finote_Web.Permissions;
 using Finote_Web.Repositories.Logging;
 using Finote_Web.Repositories.Overview;
 using Finote_Web.Repositories.Permissions;
 using Finote_Web.Repositories.Transactions;
 using Finote_Web.Repositories.UserRepo;
+using Finote_Web.Seeders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Finote_Web.Permissions;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Configure DbContext
 builder.Services.AddDbContext<FinoteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+builder.Services.AddHttpClient();
 
 // 2. Configure Identity Services
 builder.Services.AddIdentity<Users, IdentityRole>(options =>
@@ -63,7 +65,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPermissionsRepository, PermissionsRepository>();
 builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
-
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 // 5. Add MVC services
 builder.Services.AddControllersWithViews();
 
@@ -72,7 +75,7 @@ var app = builder.Build();
 
 // Seed the default roles ("Admin", "User", etc.) on startup
 await app.SeedRolesAsync();
-
+await app.SeedApiKeysAsync();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

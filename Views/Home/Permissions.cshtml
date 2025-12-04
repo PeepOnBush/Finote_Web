@@ -151,6 +151,10 @@
         <!-- Tab 4: Activity Log -->
         <div class="tab-content" id="logs">
             <h4>Nhật ký hoạt động (Activity Log)</h4>
+            <form asp-action="ClearActivityLog" asp-controller="Home" method="post"
+                  onsubmit="return confirm('Are you sure you want to permanently delete ALL activity logs?');">
+                <button type="submit" class="btn-danger"><i class="fas fa-eraser"></i> Clear Activity Log</button>
+            </form>
             <p>A log of important actions taken by users.</p>
             <div class="table-wrapper">
                 <table>

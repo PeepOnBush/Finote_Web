@@ -4,6 +4,7 @@ using Finote_Web.Models.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Finote_Web.Migrations
 {
     [DbContext(typeof(FinoteDbContext))]
-    partial class FinoteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203053123_AddApilogAndApikey")]
+    partial class AddApilogAndApikey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,12 +33,6 @@ namespace Finote_Web.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("KeyName")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -44,21 +41,10 @@ namespace Finote_Web.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("WhoCreatedId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("WhoDeletedId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("KeyName")
                         .IsUnique();
-
-                    b.HasIndex("WhoCreatedId");
-
-                    b.HasIndex("WhoDeletedId");
 
                     b.ToTable("ApiKeys");
                 });
@@ -687,23 +673,6 @@ namespace Finote_Web.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ApiKey", b =>
-                {
-                    b.HasOne("Finote_Web.Models.Data.Users", "WhoCreated")
-                        .WithMany()
-                        .HasForeignKey("WhoCreatedId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Finote_Web.Models.Data.Users", "WhoDeleted")
-                        .WithMany()
-                        .HasForeignKey("WhoDeletedId");
-
-                    b.Navigation("WhoCreated");
-
-                    b.Navigation("WhoDeleted");
                 });
 
             modelBuilder.Entity("Finote_Web.Models.Data.ActivityLog", b =>

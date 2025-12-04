@@ -24,6 +24,8 @@ namespace Finote_Web.Models.Data
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
+        public DbSet<AiLog> AiLogs { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -229,6 +231,20 @@ namespace Finote_Web.Models.Data
                 .WithMany(u => u.ActivityLogs) // We need to add this collection to the Users class
                 .HasForeignKey(al => al.UserId)
                 .OnDelete(DeleteBehavior.Cascade); // If a user is deleted, their logs are also deleted.
+            builder.Entity<AiLog>(entity =>
+            {
+                // Define the relationship: An AiLog has one User.
+                entity.HasOne(al => al.User)
+                    .WithMany() // Assuming you don't need a collection of AiLogs on the User model
+                    .HasForeignKey(al => al.UserId)
+                    .OnDelete(DeleteBehavior.Cascade); // If a user is deleted, their AI logs are also deleted.
+            });
+
+            builder.Entity<ApiKey>(entity =>
+            {
+                entity.HasIndex(e => e.KeyName).IsUnique(); // Ensure key names are unique
+            });
+
         }
     }
 }

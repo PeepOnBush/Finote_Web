@@ -1,4 +1,4 @@
-﻿using Finote_Web.Models;
+﻿using Finote_API.Services.SendEmail;
 using Finote_Web.Models.Data;
 using Finote_Web.Repositories.Overview;
 using Finote_Web.Repositories.Permissions;
@@ -9,6 +9,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Net.Http;
+using System.Net.Http.Headers; // For Authorization header
+using System.Security.Claims;
+using System.IO;
 
 namespace Finote_Web.Controllers
 {
@@ -20,19 +26,28 @@ namespace Finote_Web.Controllers
         private readonly ITransactionRepository _transactionRepo;
         private readonly IPermissionsRepository _permissionsRepo;
         private readonly UserManager<Users> _userManager;
+        private readonly ISettingsRepository _settingsRepo;
+        private readonly IEmailSenderService _emailSenderService;
+        private readonly HttpClient _httpClient;
 
         public HomeController(
             IOverviewRepository overviewRepo,
             IUserRepository userRepo,
             ITransactionRepository transactionRepo,
             IPermissionsRepository permissionsRepo,
+            ISettingsRepository settingsRepo,
+            IEmailSenderService emailSenderService,
+            HttpClient httpClient,
             UserManager<Users> userManager)
         {
             _overviewRepo = overviewRepo;
             _userRepo = userRepo;
             _transactionRepo = transactionRepo;
             _permissionsRepo = permissionsRepo;
+            _settingsRepo = settingsRepo;
+            _emailSenderService = emailSenderService;
             _userManager = userManager;
+            _httpClient = httpClient;
         }
 
         #region Overview / Dashboard
@@ -253,24 +268,154 @@ namespace Finote_Web.Controllers
             return RedirectToAction("Permissions");
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> ClearActivityLog()
+        {
+            await _permissionsRepo.ClearActivityLogAsync();
+            return RedirectToAction("Permissions");
+        }
         #endregion
 
         #region Settings (Admin Only)
 
+
         [Authorize(Roles = "Admin")]
-        public IActionResult Settings()
-        {
+        public async Task<IActionResult> Settings()
+        { // Make it async
             ViewData["CurrentPage"] = "Settings";
             var viewModel = new SettingsViewModel
             {
-                SmtpHost = "smtp.example.com",
-                ApiKey = "**************",
-                DailyApiQuota = 1000,
-                LastBackupDate = DateTime.Now.AddDays(-1)
+                ApiKey = await _settingsRepo.GetApiKeyAsync("DefaultApiKey"), // Get real key
+                                                                              // ... (other properties)
             };
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateApiKey(string apiKey)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _settingsRepo.UpdateApiKeyAsync("DefaultApiKey", apiKey, userId);
+
+            try
+            {
+                // Create an HttpClient to call the API
+
+                // IMPORTANT: This assumes your API is running at this address.
+                // You should store this URL in appsettings.json
+                var apiBaseUrl = "http://localhost:5134"; // Or whatever your API's port is
+
+                // We need to pass the Admin's JWT from the API to authorize this request.
+                // For now, let's assume this is not implemented and focus on the cache clear.
+                // A full implementation would require the admin to log into the API first.
+                // For simplicity, we can temporarily disable authorization on the API endpoint for testing.
+                _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey); // HAVE to get the header of the apikey before sending the request
+                var response = await _httpClient.PostAsync($"{apiBaseUrl}/api/Cache/clear-api-key", null);
+                response.EnsureSuccessStatusCode(); // Throws an exception if the API call fails
+
+                TempData["SuccessMessage"] = "API Key updated and API cache cleared successfully!";
+            }
+            catch (Exception ex)
+            {
+                // If the API isn't running or the call fails, show a warning.
+                TempData["ErrorMessage"] = $"API Key was updated in the database, but failed to clear the API's cache. Changes may take up to 5 minutes to apply. Error: {ex.Message}";
+            }
+            // ===========================
+
+            return RedirectToAction("Settings");
+        }
+
+        // ===== NEW ACTION FOR DELETING THE KEY =====
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> DeleteApiKey(SettingsViewModel model)
+        {
+            // 1. Verify the admin's password
+            var user = await _userManager.GetUserAsync(User);
+            var passwordCorrect = await _userManager.CheckPasswordAsync(user, model.ConfirmPassword);
+
+            if (!passwordCorrect)
+            {
+                TempData["ErrorMessage"] = "Incorrect password. API Key was not deleted.";
+                return RedirectToAction("Settings");
+            }
+
+            // 2. If password is correct, proceed with deletion
+            var userId = user.Id;
+            await _settingsRepo.DeleteApiKeyAsync("DefaultApiKey", userId);
+            TempData["SuccessMessage"] = "API Key has been cleared successfully.";
+            return RedirectToAction("Settings");
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> CreateDatabaseBackup()
+        {
+            try
+            {
+                // Call the repository to create the backup file
+                var backupFilePath = await _settingsRepo.BackupDatabaseAsync();
+
+                if (string.IsNullOrEmpty(backupFilePath) || !System.IO.File.Exists(backupFilePath))
+                {
+                    TempData["ErrorMessage"] = "Failed to create the backup file.";
+                    return RedirectToAction("Settings");
+                }
+
+                // Prepare the file for download
+                var memory = new MemoryStream();
+                using (var stream = new FileStream(backupFilePath, FileMode.Open))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
+
+                // Clean up the file from the server after reading it into memory
+                System.IO.File.Delete(backupFilePath);
+
+                // Return the file to the user's browser
+                return File(memory, "application/octet-stream", Path.GetFileName(backupFilePath));
+            }
+            catch (Exception ex)
+            {
+                // If SQL Server permissions are wrong, the exception will be caught here.
+                TempData["ErrorMessage"] = $"An error occurred during backup: {ex.Message}";
+                return RedirectToAction("Settings");
+            }
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> SendNotification(string recipient, string subject, string message)
+        {
+            var usersToSend = new List<Users>();
+            if (recipient.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                usersToSend = await _userManager.Users.ToListAsync();
+            }
+            else
+            {
+                var user = await _userManager.FindByEmailAsync(recipient);
+                if (user != null)
+                {
+                    usersToSend.Add(user);
+                }
+            }
+
+            if (usersToSend.Any())
+            {
+                foreach (var user in usersToSend)
+                {
+                    await _emailSenderService.SendEmailAsync(user.Email, subject, message);
+                }
+                TempData["SuccessMessage"] = $"Notification sent to {usersToSend.Count} user(s).";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "No users found for the specified recipient.";
+            }
+            return RedirectToAction("Settings");
+        }
         #endregion
     }
 }

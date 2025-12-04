@@ -7,6 +7,7 @@ namespace Finote_Web.Repositories.Permissions
     {
         Task<PermissionsViewModel> GetPermissionsDataAsync();
         Task UpdateRolePermissionsAsync(PermissionViewModel model);
+        Task ClearActivityLogAsync();
 
     }
 }
