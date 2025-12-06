@@ -6,6 +6,7 @@ public class SettingsRepository : ISettingsRepository
 {
     private readonly FinoteDbContext _context;
     public SettingsRepository(FinoteDbContext context) { _context = context; }
+    private const string LastBackupDateKey = "LastBackupTimestamp";
 
     public async Task<string> GetApiKeyAsync(string keyName)
     {
@@ -64,8 +65,41 @@ public class SettingsRepository : ISettingsRepository
         var backupCommand = $"BACKUP DATABASE [{dbName}] TO DISK = N'{backupFilePath}' WITH NOFORMAT, INIT, NAME = N'{dbName}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD, STATS = 10";
 
         await _context.Database.ExecuteSqlRawAsync(backupCommand);
-
+        await UpdateLastBackupDateAsync(); // Update the last backup date
         // 4. Return the full path of the created file
         return backupFilePath;
     }
+    public async Task<DateTime?> GetLastBackupDateAsync()
+    {
+        var setting = await _context.SystemSettings.FindAsync(LastBackupDateKey);
+        if (setting != null && DateTime.TryParse(setting.SettingValue, out DateTime date))
+        {
+            return date;
+        }
+        return null;
+    }
+
+    public async Task UpdateLastBackupDateAsync()
+    {
+        var setting = await _context.SystemSettings.FindAsync(LastBackupDateKey);
+        var now = DateTime.UtcNow;
+
+        if (setting != null)
+        {
+            // If the setting exists, update its value
+            setting.SettingValue = now.ToString("o"); // "o" is the round-trip format, e.g., "2025-12-05T10:30:00.12345Z"
+        }
+        else
+        {
+            // If it's the first backup ever, create the setting
+            _context.SystemSettings.Add(new SystemSetting
+            {
+                SettingKey = LastBackupDateKey,
+                SettingValue = now.ToString("o")
+            });
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    
 }

@@ -26,7 +26,7 @@ namespace Finote_Web.Models.Data
         public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<AiLog> AiLogs { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
-
+        public DbSet<SystemSetting> SystemSettings { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -244,6 +244,7 @@ namespace Finote_Web.Models.Data
             {
                 entity.HasIndex(e => e.KeyName).IsUnique(); // Ensure key names are unique
             });
+            builder.Entity<SystemSetting>().HasKey(s => s.SettingKey); // Define the primary key
 
         }
     }

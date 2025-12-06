@@ -287,7 +287,7 @@ namespace Finote_Web.Controllers
             var viewModel = new SettingsViewModel
             {
                 ApiKey = await _settingsRepo.GetApiKeyAsync("DefaultApiKey"), // Get real key
-                                                                              // ... (other properties)
+                LastBackupDate = await _settingsRepo.GetLastBackupDateAsync()
             };
             return View(viewModel);
         }

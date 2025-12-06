@@ -57,20 +57,18 @@
             <div class="backup-section">
                 @if (Model.LastBackupDate.HasValue)
                 {
-                    <p><strong>Last Backup:</strong> @Model.LastBackupDate.Value.ToString("yyyy-MM-dd h:mm tt")</p>
+                    <!-- This will now display the real, updated time -->
+                    <p><strong>Last Backup:</strong> @Model.LastBackupDate.Value.ToLocalTime().ToString("g")</p>
                 }
                 else
                 {
                     <p><strong>Last Backup:</strong> Never</p>
                 }
 
-                <!-- ===== THIS IS THE FIX ===== -->
-                <!-- Wrap the button in a form that posts to our action -->
                 <form asp-action="CreateDatabaseBackup" method="post"
                       onsubmit="return confirm('This will create a new backup of the entire database. Continue?');">
                     <button type="submit" class="btn-primary"><i class="fas fa-download"></i> Create and Download Backup</button>
                 </form>
-                <!-- =========================== -->
             </div>
         </div>
         <!-- Notif tab -->
