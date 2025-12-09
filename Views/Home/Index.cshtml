@@ -19,8 +19,8 @@
         </div>
         <div class="stat-card color-yellow">
             <i class="fas fa-dollar-sign"></i>
-            <h2>@Model.TotalRevenue.ToString("C0")</h2>
-            <p>Total Revenue (This Month)</p>
+            <h2>@ViewBag.TotalWallets</h2>
+            <p>Total Wallets</p>
         </div>
         <div class="stat-card color-lightblue">
             <i class="fas fa-receipt"></i>
@@ -29,8 +29,8 @@
         </div>
         <div class="stat-card color-green">
             <i class="fas fa-user-plus"></i>
-            <h2>@Model.NewSignupsToday</h2>
-            <p>New Signups (Today)</p>
+            <h2>@ViewBag.TotalAiUsage</h2>
+            <p>Total Ai Usage</p>
         </div>
     </div>
 

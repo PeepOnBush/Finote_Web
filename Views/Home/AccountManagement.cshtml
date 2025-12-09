@@ -24,6 +24,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>USER</th>
                         <th>EMAIL</th>
                         <th>ROLE</th>
@@ -34,6 +35,9 @@
                     @foreach (var user in Model.Users)
                     {
                         <tr>
+                            <td>
+                                <span style="font-size: 0.8rem; color: #777;">@user.Id.Substring(0, 8)...</span>
+                            </td>
                             <td>
                                 <div class="user-profile">
                                     <span>@user.FullName</span>

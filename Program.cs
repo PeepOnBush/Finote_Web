@@ -9,6 +9,8 @@ using Finote_Web.Repositories.UserRepo;
 using Finote_Web.Seeders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Finote_Web.Repositories.Charts;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Configure DbContext
@@ -67,6 +69,8 @@ builder.Services.AddScoped<IPermissionsRepository, PermissionsRepository>();
 builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
 builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+builder.Services.AddScoped<IChartRepository, ChartRepository>();
+
 // 5. Add MVC services
 builder.Services.AddControllersWithViews();
 

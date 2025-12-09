@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Net.Http.Headers; // For Authorization header
 using System.Security.Claims;
 using System.IO;
+using Finote_Web.Repositories.Charts;
 
 namespace Finote_Web.Controllers
 {
@@ -29,6 +30,8 @@ namespace Finote_Web.Controllers
         private readonly ISettingsRepository _settingsRepo;
         private readonly IEmailSenderService _emailSenderService;
         private readonly HttpClient _httpClient;
+        public readonly FinoteDbContext _context;
+        public readonly IChartRepository _chartRepo;
 
         public HomeController(
             IOverviewRepository overviewRepo,
@@ -37,7 +40,9 @@ namespace Finote_Web.Controllers
             IPermissionsRepository permissionsRepo,
             ISettingsRepository settingsRepo,
             IEmailSenderService emailSenderService,
+            IChartRepository chartRepo,
             HttpClient httpClient,
+            FinoteDbContext context,
             UserManager<Users> userManager)
         {
             _overviewRepo = overviewRepo;
@@ -48,6 +53,8 @@ namespace Finote_Web.Controllers
             _emailSenderService = emailSenderService;
             _userManager = userManager;
             _httpClient = httpClient;
+            _context = context;
+            _chartRepo = chartRepo;
         }
 
         #region Overview / Dashboard
@@ -57,6 +64,16 @@ namespace Finote_Web.Controllers
         {
             ViewData["CurrentPage"] = "Overview";
             var viewModel = await _overviewRepo.GetOverviewDataAsync();
+            // 1. Total Wallets (Count how many wallets exist in the system)
+            // Please ensure 'Wallets' matches your DbSet name in ApplicationDbContext
+            var totalWallets = _context.Wallets.Count();
+
+            // 2. Total AI Usage (Count rows in AiLog table)
+            var totalAiUsage = _context.AiLogs.Count();
+
+            // Pass data to View
+            ViewBag.TotalWallets = totalWallets;
+            ViewBag.TotalAiUsage = totalAiUsage;
             return View(viewModel);
         }
 
@@ -181,45 +198,27 @@ namespace Finote_Web.Controllers
         //}
 
         [Authorize(Policy = "CanViewStatistics")]
-        public IActionResult ReportUsers()
+        public async Task<IActionResult> ReportUsers()
         {
             ViewData["CurrentPage"] = "Statistics";
-            var viewModel = new ChartViewModel
-            {
-                PageTitle = "User Registration Report",
-                PageSubTitle = "Biểu đồ số lượng người đăng ký theo thời gian",
-                Labels = new List<string> { "Jan", "Feb", "Mar", "Apr", "May", "Jun" },
-                Data = new List<int> { 120, 150, 180, 210, 160, 250 }
-            };
+            var viewModel = await _chartRepo.GetUserRegistrationsChartAsync();
             return View("ReportChart", viewModel);
         }
 
         // ... (Other report actions like ReportNotesWallets and ReportAiUsage would also have the [Authorize] attribute)
         [Authorize(Policy = "CanViewStatistics")]
-        public IActionResult ReportNotesWallets()
+        public async Task<IActionResult> ReportNotesWallets()
         {
             ViewData["CurrentPage"] = "Statistics";
-            var viewModel = new ChartViewModel
-            {
-                PageTitle = "Notes & Wallets Creation Report",
-                PageSubTitle = "Biểu đồ số lượng ví/ghi chú theo thời gian",
-                Labels = new List<string> { "Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6" },
-                Data = new List<int> { 850, 920, 1100, 1050, 1300, 1450 } // Sample data for new items per week
-            };
+            var viewModel = await _chartRepo.GetTransactionCreationChartAsync();
             return View("ReportChart", viewModel);
         }
 
         [Authorize(Policy = "CanViewStatistics")]
-        public IActionResult ReportAiUsage()
+        public async Task<IActionResult> ReportAiUsage()    
         {
             ViewData["CurrentPage"] = "Statistics";
-            var viewModel = new ChartViewModel
-            {
-                PageTitle = "AI Feature Usage Report",
-                PageSubTitle = "Biểu đồ số lượt sử dụng AI",
-                Labels = new List<string> { "Jan", "Feb", "Mar", "Apr", "May", "Jun" },
-                Data = new List<int> { 3500, 4100, 3900, 5200, 4800, 6000 } // Sample data for AI uses per month
-            };
+            var viewModel = await _chartRepo.GetAiUsageChartAsync();
             return View("ReportChart", viewModel);
         }
 
@@ -301,16 +300,9 @@ namespace Finote_Web.Controllers
 
             try
             {
-                // Create an HttpClient to call the API
-
-                // IMPORTANT: This assumes your API is running at this address.
-                // You should store this URL in appsettings.json
                 var apiBaseUrl = "http://localhost:5134"; // Or whatever your API's port is
 
-                // We need to pass the Admin's JWT from the API to authorize this request.
-                // For now, let's assume this is not implemented and focus on the cache clear.
-                // A full implementation would require the admin to log into the API first.
-                // For simplicity, we can temporarily disable authorization on the API endpoint for testing.
+               
                 _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey); // HAVE to get the header of the apikey before sending the request
                 var response = await _httpClient.PostAsync($"{apiBaseUrl}/api/Cache/clear-api-key", null);
                 response.EnsureSuccessStatusCode(); // Throws an exception if the API call fails
