@@ -55,21 +55,59 @@
             <h4>Data Backup</h4>
             <p>Create and download a full backup of the database.</p>
             <div class="backup-section">
-                @if (Model.LastBackupDate.HasValue)
-                {
-                    <!-- This will now display the real, updated time -->
-                    <p><strong>Last Backup:</strong> @Model.LastBackupDate.Value.ToLocalTime().ToString("g")</p>
-                }
-                else
-                {
-                    <p><strong>Last Backup:</strong> Never</p>
-                }
+                <p>
+                    <strong>Last Backup:</strong>
+                    <!-- ===== THIS ID MUST EXIST FOR JS TO WORK ===== -->
+                    <span id="lastBackupDate">
+                        @(Model.LastBackupDate.HasValue? Model.LastBackupDate.Value.ToLocalTime().ToString("g") : "Never")
+                    </span>
+                    <!-- ============================================= -->
+                </p>
 
-                <form asp-action="CreateDatabaseBackup" method="post"
-                      onsubmit="return confirm('This will create a new backup of the entire database. Continue?');">
-                    <button type="submit" class="btn-primary"><i class="fas fa-download"></i> Create and Download Backup</button>
-                </form>
+                <!-- The Button -->
+                <button type="button" id="createBackupBtn" class="btn-primary">
+                    <i class="fas fa-download"></i> Create and Download Backup
+                </button>
+
+                <!-- The Status Message Area -->
+                <span id="backupStatus" style="margin-left: 1rem;"></span>
             </div>
+            <hr style="margin: 2rem 0; border-top: 1px solid #eee;">
+
+            <h5>Backup History (Server Files)</h5>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Date Created</th>
+                            <th>Size</th>
+                            <!-- Optional: Add Action column if we implement download later -->
+                        </tr>
+                    </thead>
+                    <tbody id="backupTableBody">
+                        @if (Model.BackupHistory.Any())
+                        {
+                            @foreach (var file in Model.BackupHistory)
+                            {
+                                <tr>
+                                    <td>@file.FileName</td>
+                                    <td>@file.CreatedAt.ToString("g")</td>
+                                    <td>@file.Size</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <!-- ===== ADD CLASS HERE ===== -->
+                            <tr class="no-files-row">
+                                <td colspan="3" style="text-align:center; color:#777;">No backup files found on server.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
         </div>
         @* <!-- Notif tab -->
         <div class="tab-content" id="notify">
@@ -125,6 +163,10 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+
+            // ===================================================
+            // =========== DELETE KEY MODAL LOGIC ================
+            // ===================================================
             const deleteKeyModal = document.getElementById('deleteKeyModal');
             const deleteKeyBtn = document.getElementById('deleteKeyBtn');
             const closeBtn = deleteKeyModal.querySelector('.close-btn');
@@ -142,6 +184,93 @@
             window.addEventListener('click', (e) => {
                 if (e.target == deleteKeyModal) { deleteKeyModal.style.display = 'none'; }
             });
+
+
+            // ===================================================
+            // =========== BACKUP & DOWNLOAD LOGIC ===============
+            // ===================================================
+            const backupButton = document.getElementById('createBackupBtn');
+            const statusSpan = document.getElementById('backupStatus');
+            const lastBackupDateSpan = document.getElementById('lastBackupDate');
+            const backupTableBody = document.getElementById('backupTableBody');
+
+            if (backupButton) {
+                backupButton.addEventListener('click', function() {
+
+                    if (!confirm('This will create a new backup of the entire database. Continue?')) {
+                        return;
+                    }
+
+                    // 1. UI Feedback
+                    backupButton.disabled = true;
+                    statusSpan.textContent = 'Creating backup...';
+                    statusSpan.style.color = 'blue';
+
+                    // 2. AJAX Request
+                    fetch('@Url.Action("CreateDatabaseBackup", "Home")', {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.message); });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 3. Trigger Download
+                        const byteCharacters = atob(data.fileContents);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = data.fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        // 4. Update UI Text
+                        lastBackupDateSpan.textContent = data.newBackupDate;
+                        statusSpan.textContent = 'Backup successful!';
+                        statusSpan.style.color = 'green';
+
+                        // 5. Update Table List Real-Time
+                        // Remove "No files" row if it exists
+                        const noFilesRow = backupTableBody.querySelector('.no-files-row');
+                        if (noFilesRow) {
+                            noFilesRow.remove();
+                        }
+
+                        // Create new row
+                        const newRow = document.createElement('tr');
+                        newRow.classList.add('new-row-highlight'); // For CSS animation
+                        newRow.innerHTML = `
+                            <td>${data.fileName}</td>
+                            <td>${data.newBackupDate}</td>
+                            <td>${data.fileSize}</td>
+                        `;
+
+                        // Insert at top
+                        backupTableBody.insertBefore(newRow, backupTableBody.firstChild);
+                    })
+                    .catch(error => {
+                        console.error('Backup failed:', error);
+                        statusSpan.textContent = `Error: ${error.message}`;
+                        statusSpan.style.color = 'red';
+                    })
+                    .finally(() => {
+                        backupButton.disabled = false;
+                        setTimeout(() => { statusSpan.textContent = ''; }, 5000);
+                    });
+                });
+            }
         });
     </script>
 }

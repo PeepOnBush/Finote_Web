@@ -39,6 +39,39 @@ namespace Finote_Web.Repositories.UserRepo
             }
             return userViewModels;
         }
+        public async Task<IEnumerable<UserViewModel>> GetAllUsersAsync(string searchString = null)
+        {
+            // Start with the base query
+            var query = _userManager.Users.Include(u => u.UserInfomation).AsQueryable();
+
+            // Apply Search Filter if provided
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                // Search by Username, Email, or FullName
+                query = query.Where(u => u.UserName.Contains(searchString)
+                                      || u.Email.Contains(searchString)
+                                      || (u.UserInfomation != null && u.UserInfomation.FullName.Contains(searchString)));
+            }
+
+            var users = await query.ToListAsync();
+
+            // ... (Mapping logic remains the same) ...
+            var userViewModels = new List<UserViewModel>();
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userViewModels.Add(new UserViewModel
+                {
+                    Id = user.Id, // Now an int
+                    FullName = user.UserInfomation?.FullName ?? user.UserName,
+                    Email = user.Email,
+                    Role = roles.FirstOrDefault() ?? "N/A",
+                    AvatarUrl = user.UserInfomation?.AvatarUrl ?? "https://i.pravatar.cc/40"
+                });
+            }
+            return userViewModels;
+        }
+
         public async Task<UserDetailsViewModel> GetUserDetailsAsync(string id)
         {
             var user = await _userManager.Users
@@ -80,7 +113,7 @@ namespace Finote_Web.Repositories.UserRepo
             {
                 // Assign the selected role to the new user
                 await _userManager.AddToRoleAsync(user, newUser.SelectedRole); 
-                await _logRepository.LogActivityAsync(user.Id, $"Account '{user.UserName}' Created");
+                await _logRepository.LogActivityAsync(user.Id, $"Account '{user.UserName}' '({user.Email})' Created");
             }  
             else
             {
@@ -164,11 +197,16 @@ namespace Finote_Web.Repositories.UserRepo
             await _userManager.AddToRoleAsync(user, userToUpdate.SelectedRole);
         }
 
-        public async Task DeleteUserAsync(string id)
+        public async Task DeleteUserAsync(string id) // Ensure this takes 'string id' or 'int id' based on your previous ID change
         {
-            var user = await _userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id.ToString());
             if (user != null)
             {
+                
+                // Let's assume you want to see "User X was deleted".
+                await _logRepository.LogActivityAsync(user.Id.ToString(), $"Account Deleted: {user.UserName} ({user.Email})");
+                // =================================================
+
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded) throw new ApplicationException("Failed to delete user.");
             }

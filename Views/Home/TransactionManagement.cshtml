@@ -15,12 +15,36 @@
     </div>
 
     <div class="content-card">
-        <div class="toolbar">
+        <!-- Filter Form -->
+        <form asp-action="TransactionManagement" method="get" class="toolbar" style="flex-wrap: wrap; gap: 10px;">
+
+            <!-- Search -->
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="search" placeholder="Search by note, category, or user...">
+                <input type="search" name="searchString" value="@ViewBag.CurrentFilter" placeholder="Search note, category, user...">
             </div>
-        </div>
+
+            <!-- Filter By Type -->
+            <select name="typeFilter" class="form-control" style="width: auto; display: inline-block;">
+                <option value="All" selected="@(ViewBag.TypeFilter == "All")">All Types</option>
+                <option value="Income" selected="@(ViewBag.TypeFilter == "Income")">Income Only</option>
+                <option value="Expense" selected="@(ViewBag.TypeFilter == "Expense")">Expense Only</option>
+            </select>
+
+            <!-- Date Range -->
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" placeholder="Start Date">
+                <span>to</span>
+                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" placeholder="End Date">
+            </div>
+
+            <!-- Filter Button -->
+            <button type="submit" class="btn-secondary" style="padding: 10px 15px;">Filter</button>
+
+            <!-- Clear Filters Link -->
+            <a asp-action="TransactionManagement" class="btn-secondary" style="text-decoration:none; display:flex; align-items:center;">Reset</a>
+
+        </form>
 
         <div class="table-wrapper">
             <table>

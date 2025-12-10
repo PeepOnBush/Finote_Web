@@ -36,9 +36,12 @@ namespace Finote_Web.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("KeyName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("KeyValue")
                         .IsRequired()
@@ -52,9 +55,6 @@ namespace Finote_Web.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("KeyName")
-                        .IsUnique();
 
                     b.HasIndex("WhoCreatedId");
 

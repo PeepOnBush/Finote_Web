@@ -240,10 +240,7 @@ namespace Finote_Web.Models.Data
                     .OnDelete(DeleteBehavior.Cascade); // If a user is deleted, their AI logs are also deleted.
             });
 
-            builder.Entity<ApiKey>(entity =>
-            {
-                entity.HasIndex(e => e.KeyName).IsUnique(); // Ensure key names are unique
-            });
+            
             builder.Entity<SystemSetting>().HasKey(s => s.SettingKey); // Define the primary key
 
         }

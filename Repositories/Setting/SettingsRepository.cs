@@ -1,4 +1,5 @@
 ﻿using Finote_Web.Models.Data;
+using Finote_Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System; 
 using System.IO; 
@@ -10,39 +11,58 @@ public class SettingsRepository : ISettingsRepository
 
     public async Task<string> GetApiKeyAsync(string keyName)
     {
-        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.KeyName == keyName);
+        // Fetch the latest ACTIVE key
+        var apiKey = await _context.ApiKeys
+            .Where(k => k.KeyName == keyName && !k.IsDeleted)
+            .OrderByDescending(k => k.CreatedAt)
+            .FirstOrDefaultAsync();
+
         return apiKey?.KeyValue ?? string.Empty;
     }
 
-    public async Task UpdateApiKeyAsync(string keyName, string newKeyValue, string updatedById)
+    public async Task UpdateApiKeyAsync(string keyName, string newKeyValue, string userId)
     {
-        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.KeyName == keyName);
-        if (apiKey != null)
+        // 1. Find the currently active key
+        var currentActiveKey = await _context.ApiKeys
+            .Where(k => k.KeyName == keyName && !k.IsDeleted)
+            .OrderByDescending(k => k.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        // 2. If it exists, "Soft Delete" it
+        if (currentActiveKey != null)
         {
-            apiKey.KeyValue = newKeyValue;
-            // Optionally, you could update a "LastUpdatedAt" field here too
-            await _context.SaveChangesAsync();
+            currentActiveKey.IsDeleted = true;
+            currentActiveKey.DeletedAt = DateTime.UtcNow;
+            currentActiveKey.WhoDeletedId = userId;
+            // We do NOT save changes yet, we'll do it in one transaction
         }
-        else // If the key doesn't exist, create it.
+
+        // 3. Create the NEW key
+        var newKey = new ApiKey
         {
-            _context.ApiKeys.Add(new ApiKey
-            {
-                KeyName = keyName,
-                KeyValue = newKeyValue,
-                CreatedAt = DateTime.UtcNow,
-                WhoCreatedId = updatedById
-            });
-            await _context.SaveChangesAsync();
-        }
+            KeyName = keyName,
+            KeyValue = newKeyValue,
+            CreatedAt = DateTime.UtcNow,
+            WhoCreatedId = userId,
+            IsDeleted = false
+        };
+
+        _context.ApiKeys.Add(newKey);
+        await _context.SaveChangesAsync();
     }
 
     // ===== NEW METHOD FOR SOFT DELETING =====
     public async Task DeleteApiKeyAsync(string keyName, string deletedById)
     {
-        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.KeyName == keyName);
+        // Soft delete the active key
+        var apiKey = await _context.ApiKeys
+            .Where(k => k.KeyName == keyName && !k.IsDeleted)
+            .OrderByDescending(k => k.CreatedAt)
+            .FirstOrDefaultAsync();
+
         if (apiKey != null)
         {
-            apiKey.KeyValue = string.Empty; // Set the key value to empty
+            apiKey.IsDeleted = true;
             apiKey.DeletedAt = DateTime.UtcNow;
             apiKey.WhoDeletedId = deletedById;
             await _context.SaveChangesAsync();
@@ -100,6 +120,31 @@ public class SettingsRepository : ISettingsRepository
         }
         await _context.SaveChangesAsync();
     }
+    public async Task<List<BackupFileViewModel>> GetBackupHistoryAsync()
+    {
+        var backupFolder = Path.Combine(Directory.GetCurrentDirectory(), "DatabaseBackups");
 
-    
+        if (!Directory.Exists(backupFolder))
+        {
+            return new List<BackupFileViewModel>();
+        }
+
+        // Get all .bak files
+        var directoryInfo = new DirectoryInfo(backupFolder);
+        var files = directoryInfo.GetFiles("*.bak")
+                                 .OrderByDescending(f => f.CreationTime) // Newest first
+                                 .ToList();
+
+        var backupList = files.Select(f => new BackupFileViewModel
+        {
+            FileName = f.Name,
+            CreatedAt = f.CreationTime,
+            // Simple size formatting
+            Size = (f.Length / 1024f / 1024f).ToString("0.00") + " MB"
+        }).ToList();
+
+        return await Task.FromResult(backupList);
+    }
+
+
 }

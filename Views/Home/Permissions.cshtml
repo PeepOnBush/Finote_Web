@@ -2,6 +2,8 @@
 @model PermissionsViewModel
 @{
     ViewData["Title"] = "Permissions & Security";
+    var activeTab = ViewData["ActiveTab"] as string ?? "roles";
+
 }
 <main>
     <div class="page-header">
@@ -11,14 +13,14 @@
 
     <div class="content-card">
         <nav class="tab-nav">
-            <button class="tab-link active" data-tab="roles">Danh sách Role</button>
-            <button class="tab-link" data-tab="permissions">Chỉnh sửa quyền</button>
-            <button class="tab-link" data-tab="assign">Gán quyền cho user</button>
-            <button class="tab-link" data-tab="logs">Nhật ký hoạt động</button>
+            <button class="tab-link @(activeTab == "roles" ? "active" : "")" data-tab="roles">Danh sách Role</button>
+            <button class="tab-link @(activeTab == "permissions" ? "active" : "")" data-tab="permissions">Chỉnh sửa quyền</button>
+            <button class="tab-link @(activeTab == "assign" ? "active" : "")" data-tab="assign">Gán quyền cho user</button>
+            <button class="tab-link @(activeTab == "logs" ? "active" : "")" data-tab="logs">Nhật ký hoạt động</button>
         </nav>
 
         <!-- Tab 1: Role List -->
-        <div class="tab-content active" id="roles">
+        <div class="tab-content @(activeTab == "roles" ? "active" : "")" id="roles">
             <h4>Role List</h4>
             <p>Manage the roles available in the system.</p>
             <div class="table-wrapper">
@@ -45,7 +47,7 @@
         </div>
 
         <!-- Tab 2: Edit Permissions (static for now) -->
-        <div class="tab-content" id="permissions">
+        <div class="tab-content @(activeTab == "permissions" ? "active" : "")" id="permissions">
             <h4>Chỉnh sửa quyền (Edit Permissions)</h4>
             <p>Define which roles have access to specific pages.</p>
             <div class="table-wrapper">
@@ -108,9 +110,25 @@
 
 
         <!-- Tab 3: Assign Role (static for now) -->
-        <div class="tab-content" id="assign">
-            <h4>Gán quyền cho user (Assign Role to User)</h4>
-            <p>Change a specific user's role.</p>
+        <div class="tab-content @(activeTab == "assign" ? "active" : "")" id="assign">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <div>
+                    <h4>Gán quyền cho user (Assign Role to User)</h4>
+                    <p style="margin-bottom:0;">Change a specific user's role.</p>
+                </div>
+
+                <!-- Search Form -->
+                <form asp-action="Permissions" method="get">
+                    <!-- Hidden input to ensure we stay on the Assign tab after search -->
+                    <!-- Note: You might need JS to auto-switch tabs, but for now this searches. -->
+                    <input type="hidden" name="activeTab" value="assign" />
+                    <div class="search-wrapper" style="width: 300px;">
+                        <i class="fas fa-search"></i>
+                        <input type="search" name="searchString" value="@ViewData["CurrentFilter"]" placeholder="Search user..." style="width:100%;" onchange="this.form.submit()">
+                    </div>
+                </form>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -153,7 +171,7 @@
         </div>
 
         <!-- Tab 4: Activity Log -->
-        <div class="tab-content" id="logs">
+        <div class="tab-content @(activeTab == "logs" ? "active" : "")" id="logs">
             <h4>Nhật ký hoạt động (Activity Log)</h4>
             <form asp-action="ClearActivityLog" asp-controller="Home" method="post"
                   onsubmit="return confirm('Are you sure you want to permanently delete ALL activity logs?');">

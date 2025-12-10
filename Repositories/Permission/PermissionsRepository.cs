@@ -25,82 +25,124 @@ namespace Finote_Web.Repositories.Permissions
             _context = context;
         }
 
-        public async Task<PermissionsViewModel> GetPermissionsDataAsync()
+        public async Task<PermissionsViewModel> GetPermissionsDataAsync(string userSearchString = null)
         {
-            // --- Role Counts (existing logic is fine) ---
+            // =========================================================
+            // 1. ROLE LIST TAB (Count users per role)
+            // =========================================================
             var roleViewModels = new List<RoleViewModel>();
+
+            // We access the built-in Identity roles via the RoleManager
             var allRoles = await _roleManager.Roles.ToListAsync();
+
             foreach (var role in allRoles)
             {
                 var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name);
                 roleViewModels.Add(new RoleViewModel { Name = role.Name, UserCount = usersInRole.Count });
             }
 
-            // --- NEW: User Role Assignments ---
+            // =========================================================
+            // 2. ASSIGN ROLE TAB (Searchable User List)
+            // =========================================================
             var usersWithRoles = new List<UserRoleViewModel>();
-            var allUsers = await _userManager.Users.ToListAsync();
+
+            // Start query and Include UserInfomation so we can search/display the Full Name
+            var userQuery = _userManager.Users
+                .Include(u => u.UserInfomation)
+                .AsQueryable();
+
+            // Apply Search Logic (UserName OR Email OR FullName)
+            if (!string.IsNullOrEmpty(userSearchString))
+            {
+                userQuery = userQuery.Where(u =>
+                    u.UserName.Contains(userSearchString) ||
+                    u.Email.Contains(userSearchString) ||
+                    (u.UserInfomation != null && u.UserInfomation.FullName.Contains(userSearchString))
+                );
+            }
+
+            var allUsers = await userQuery.ToListAsync();
+
             foreach (var user in allUsers)
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
                 usersWithRoles.Add(new UserRoleViewModel
                 {
-                    UserId = user.Id,
-                    UserName = user.UserName,
+                    UserId = user.Id.ToString(), // Handles int or string ID safely
+                                                 // Display FullName if available, otherwise Username
+                    UserName = user.UserInfomation?.FullName ?? user.UserName,
                     CurrentRole = userRoles.FirstOrDefault() ?? "No Role"
                 });
             }
 
-            // --- NEW: List of available roles for dropdowns ---
+            // Dropdown list for the view
             var availableRoles = allRoles.Select(r => new SelectListItem { Value = r.Name, Text = r.Name }).ToList();
+
+            // =========================================================
+            // 3. ACTIVITY LOG TAB
+            // =========================================================
             var activityLogs = await _context.ActivityLogs
-               .Include(log => log.User) // Join with the Users table
-               .OrderByDescending(log => log.Timestamp) // Show newest first
-               .Take(50) // Limit to the last 50 logs for performance
+               .Include(log => log.User)
+               .OrderByDescending(log => log.Timestamp)
+               .Take(50)
                .Select(log => new ActivityLogViewModel
                {
                    Id = log.Id,
                    UserName = log.User.UserName,
                    Action = log.Action,
-                   Timestamp = log.Timestamp.ToLocalTime() // Convert from UTC to local time for display
+                   Timestamp = log.Timestamp.ToLocalTime()
                })
                .ToListAsync();
 
-            var everyRoles = await _roleManager.Roles.ToListAsync();
-            var allPermissions = new List<RoleClaimViewModel>
+            // =========================================================
+            // 4. EDIT PERMISSIONS TAB
+            // =========================================================
+
+            // Define the list of permissions we want to manage (using your Authorization constants)
+            var allPermissionsToCheck = new List<string>
     {
-        new RoleClaimViewModel { ClaimType = AppPermissions.ViewOverview },
-        new RoleClaimViewModel { ClaimType = AppPermissions.ViewStatistics },
-        new RoleClaimViewModel { ClaimType = AppPermissions.AccessAccountManagement },
-        new RoleClaimViewModel { ClaimType = AppPermissions.AccessTransactionManagement }
+        AppPermissions.ViewOverview,
+        AppPermissions.ViewStatistics,
+        AppPermissions.AccessAccountManagement,
+        AppPermissions.AccessTransactionManagement
     };
 
             var rolePermissionsList = new List<PermissionViewModel>();
+
+            // Loop through every existing Identity Role
             foreach (var role in allRoles)
             {
                 var roleClaims = await _roleManager.GetClaimsAsync(role);
                 var roleClaimsViewModel = new List<RoleClaimViewModel>();
-                foreach (var permission in allPermissions)
+
+                // For this role, check if they have each specific permission
+                foreach (var permission in allPermissionsToCheck)
                 {
                     roleClaimsViewModel.Add(new RoleClaimViewModel
                     {
-                        ClaimType = permission.ClaimType,
-                        // Check if the role currently has this claim
-                        IsSelected = roleClaims.Any(c => c.Type == permission.ClaimType)
+                        ClaimType = permission,
+                        // Check if the role currently has this claim in the database
+                        IsSelected = roleClaims.Any(c => c.Type == permission)
                     });
                 }
                 rolePermissionsList.Add(new PermissionViewModel { RoleName = role.Name, RoleClaims = roleClaimsViewModel });
             }
+
+            // =========================================================
+            // 5. ASSEMBLE FINAL VIEW MODEL
+            // =========================================================
             var viewModel = new PermissionsViewModel
             {
                 Roles = roleViewModels,
-                UsersWithRoles = usersWithRoles, // Add the new data
-                AvailableRoles = availableRoles,   // Add the dropdown options
+                UsersWithRoles = usersWithRoles,
+                AvailableRoles = availableRoles,
                 ActivityLogs = activityLogs,
                 RolePermissions = rolePermissionsList
             };
-            
+
             return viewModel;
         }
+
         public async Task UpdateRolePermissionsAsync(PermissionViewModel model)
         {
             if (model.RoleName == "Admin")

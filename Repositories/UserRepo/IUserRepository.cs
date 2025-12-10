@@ -5,6 +5,8 @@ namespace Finote_Web.Repositories.UserRepo
     public interface IUserRepository
     {
         Task<IEnumerable<UserViewModel>> GetAllUsersAsync();
+        Task<IEnumerable<UserViewModel>> GetAllUsersAsync(string searchString = null);
+
         Task<EditUserViewModel> GetUserForEditAsync(string id); // For populating the edit form
         Task CreateUserAsync(AddUserViewModel newUser);
         Task UpdateUserAsync(EditUserViewModel userToUpdate);

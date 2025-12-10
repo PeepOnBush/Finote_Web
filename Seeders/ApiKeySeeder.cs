@@ -12,9 +12,9 @@ public static class ApiKeySeeder
             var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<Users>>(); // Get UserManager
 
             string defaultKeyName = "DefaultApiKey";
-            var apiKeyExists = await context.ApiKeys.AnyAsync(k => k.KeyName == defaultKeyName);
+            var activeKeyExists = await context.ApiKeys.AnyAsync(k => k.KeyName == defaultKeyName && !k.IsDeleted);
 
-            if (!apiKeyExists)
+            if (!activeKeyExists)
             {
                 // Find the first user with the "Admin" role to be the creator
                 var adminUser = (await userManager.GetUsersInRoleAsync("Admin")).FirstOrDefault();

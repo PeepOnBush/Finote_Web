@@ -956,3 +956,16 @@ tbody tr:last-child td {
     border-radius: 5px;
     margin-bottom: 1rem;
 }
+@keyframes highlightFade {
+    from {
+        background-color: #d1e7dd;
+    }
+
+    to {
+        background-color: transparent;
+    }
+}
+
+.new-row-highlight {
+    animation: highlightFade 2s ease-out;
+}

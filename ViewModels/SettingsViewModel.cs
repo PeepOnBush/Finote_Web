@@ -2,6 +2,13 @@
 
 namespace Finote_Web.ViewModels
 {
+    public class BackupFileViewModel
+    {
+        public string FileName { get; set; }
+        public string FilePath { get; set; } // Encrypted or relative path if needed
+        public DateTime CreatedAt { get; set; }
+        public string Size { get; set; } // e.g., "15 MB"
+    }
     public class SettingsViewModel
     {
         // Tab 1: System Configuration
@@ -18,5 +25,7 @@ namespace Finote_Web.ViewModels
         // Tab 3: Notification
         public string? NotificationSubject { get; set; }
         public string? NotificationBody { get; set; }
+        public List<BackupFileViewModel> BackupHistory { get; set; } = new();
+
     }
 }

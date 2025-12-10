@@ -4,6 +4,7 @@ using Finote_Web.Repositories.Overview;
 using Finote_Web.Repositories.Permissions;
 using Finote_Web.Repositories.Transactions;
 using Finote_Web.Repositories.UserRepo;
+using Finote_Web.Repositories.Logging;
 using Finote_Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -32,6 +33,7 @@ namespace Finote_Web.Controllers
         private readonly HttpClient _httpClient;
         public readonly FinoteDbContext _context;
         public readonly IChartRepository _chartRepo;
+        public readonly IActivityLogRepository _activityLogRepository;
 
         public HomeController(
             IOverviewRepository overviewRepo,
@@ -41,6 +43,7 @@ namespace Finote_Web.Controllers
             ISettingsRepository settingsRepo,
             IEmailSenderService emailSenderService,
             IChartRepository chartRepo,
+            IActivityLogRepository activityLogRepository,
             HttpClient httpClient,
             FinoteDbContext context,
             UserManager<Users> userManager)
@@ -55,6 +58,7 @@ namespace Finote_Web.Controllers
             _httpClient = httpClient;
             _context = context;
             _chartRepo = chartRepo;
+            _activityLogRepository = activityLogRepository;
         }
 
         #region Overview / Dashboard
@@ -81,22 +85,29 @@ namespace Finote_Web.Controllers
 
         #region Account Management (Admin Only)
 
-        [Authorize(Policy = "CanAccessAccountManagement")]
-        public async Task<IActionResult> AccountManagement()
+        [Authorize(Roles = "Admin")]
+        // Add the parameter to the action
+        public async Task<IActionResult> AccountManagement(string searchString)
         {
             ViewData["CurrentPage"] = "AccountManagement";
-            var users = await _userRepo.GetAllUsersAsync();
+            // Pass the search string to the view data so we can keep it in the input box
+            ViewData["CurrentFilter"] = searchString;
+
+            // Pass it to the repository
+            var users = await _userRepo.GetAllUsersAsync(searchString);
+
             var viewModel = new AccountManagementViewModel
             {
                 Users = users.ToList(),
+                // ... (NewUser initialization remains the same) ...
                 NewUser = new AddUserViewModel
                 {
                     AvailableRoles = new List<SelectListItem>
-                    {
-                        new SelectListItem { Value = "Admin", Text = "Admin" },
-                        new SelectListItem { Value = "Editor", Text = "Editor" },
-                        new SelectListItem { Value = "User", Text = "User" }
-                    }
+            {
+                new SelectListItem { Value = "Admin", Text = "Admin" },
+                new SelectListItem { Value = "Editor", Text = "Editor" },
+                new SelectListItem { Value = "User", Text = "User" }
+            }
                 }
             };
             return View(viewModel);
@@ -171,7 +182,27 @@ namespace Finote_Web.Controllers
             {
                 return BadRequest();
             }
-            await _userRepo.DeleteUserAsync(id);
+
+            // 1. Get the details of the user we are about to delete (so we can log their name)
+            var userToDelete = await _userManager.FindByIdAsync(id);
+
+            if (userToDelete != null)
+            {
+                // Store the name for the log message
+                string deletedUserName = userToDelete.UserName;
+                string deletedUserEmail = userToDelete.Email;
+
+                // 2. Perform the delete
+                await _userRepo.DeleteUserAsync(id);
+
+                // 3. Get the ID of the CURRENT ADMIN (You)
+                var adminId = _userManager.GetUserId(User);
+
+                // 4. Log the action assigned to the ADMIN
+                // This log will persist because the Admin user is NOT being deleted.
+                await _activityLogRepository.LogActivityAsync(adminId, $"Deleted User: {deletedUserName} ({deletedUserEmail})");
+            }
+
             return RedirectToAction("AccountManagement");
         }
 
@@ -180,10 +211,21 @@ namespace Finote_Web.Controllers
         #region Transaction Management
 
         [Authorize(Policy = "CanAccessTransactionManagement")]
-        public async Task<IActionResult> TransactionManagement()
+        public async Task<IActionResult> TransactionManagement(
+                string searchString,
+                string typeFilter = "All",
+                DateTime? startDate = null,
+                DateTime? endDate = null)
         {
             ViewData["CurrentPage"] = "TransactionManagement";
-            var viewModel = await _transactionRepo.GetTransactionManagementDataAsync();
+
+            // Save filter state to ViewBag to repopulate the form
+            ViewBag.CurrentFilter = searchString;
+            ViewBag.TypeFilter = typeFilter;
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+
+            var viewModel = await _transactionRepo.GetTransactionManagementDataAsync(searchString, typeFilter, startDate, endDate);
             return View(viewModel);
         }
 
@@ -227,10 +269,16 @@ namespace Finote_Web.Controllers
         #region Authorization & Security (Admin Only)
 
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Permissions()
+        // Add activeTab parameter, defaulting to "roles"
+        public async Task<IActionResult> Permissions(string searchString, string activeTab = "roles")
         {
             ViewData["CurrentPage"] = "Permissions";
-            var viewModel = await _permissionsRepo.GetPermissionsDataAsync();
+            ViewData["CurrentFilter"] = searchString;
+
+            // Pass the active tab choice to the view
+            ViewData["ActiveTab"] = activeTab;
+
+            var viewModel = await _permissionsRepo.GetPermissionsDataAsync(searchString);
             return View(viewModel);
         }
 
@@ -286,7 +334,8 @@ namespace Finote_Web.Controllers
             var viewModel = new SettingsViewModel
             {
                 ApiKey = await _settingsRepo.GetApiKeyAsync("DefaultApiKey"), // Get real key
-                LastBackupDate = await _settingsRepo.GetLastBackupDateAsync()
+                LastBackupDate = await _settingsRepo.GetLastBackupDateAsync(),
+                BackupHistory = await _settingsRepo.GetBackupHistoryAsync()
             };
             return View(viewModel);
         }
@@ -346,34 +395,39 @@ namespace Finote_Web.Controllers
         {
             try
             {
-                // Call the repository to create the backup file
                 var backupFilePath = await _settingsRepo.BackupDatabaseAsync();
 
                 if (string.IsNullOrEmpty(backupFilePath) || !System.IO.File.Exists(backupFilePath))
                 {
-                    TempData["ErrorMessage"] = "Failed to create the backup file.";
-                    return RedirectToAction("Settings");
+                    return StatusCode(500, new { message = "Failed to create the backup file." });
                 }
 
-                // Prepare the file for download
-                var memory = new MemoryStream();
-                using (var stream = new FileStream(backupFilePath, FileMode.Open))
+                // Read bytes for download
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(backupFilePath);
+                var fileName = Path.GetFileName(backupFilePath);
+
+                // ===== GET FILE SIZE FOR UI =====
+                var fileInfo = new FileInfo(backupFilePath);
+                string fileSizeString = (fileInfo.Length / 1024f / 1024f).ToString("0.00") + " MB";
+                // ================================
+
+                // IMPORTANT: If you want the file to appear in the list after reload, 
+                // DO NOT delete it here. If you delete it, the list is just a visual log.
+                // System.IO.File.Delete(backupFilePath); // <--- Keep this commented out if you want persistent history
+
+                var newTimestamp = await _settingsRepo.GetLastBackupDateAsync();
+
+                return Ok(new
                 {
-                    await stream.CopyToAsync(memory);
-                }
-                memory.Position = 0;
-
-                // Clean up the file from the server after reading it into memory
-                System.IO.File.Delete(backupFilePath);
-
-                // Return the file to the user's browser
-                return File(memory, "application/octet-stream", Path.GetFileName(backupFilePath));
+                    fileContents = Convert.ToBase64String(fileBytes),
+                    fileName = fileName,
+                    newBackupDate = newTimestamp?.ToLocalTime().ToString("g") ?? "N/A",
+                    fileSize = fileSizeString // <--- Add this to the JSON
+                });
             }
             catch (Exception ex)
             {
-                // If SQL Server permissions are wrong, the exception will be caught here.
-                TempData["ErrorMessage"] = $"An error occurred during backup: {ex.Message}";
-                return RedirectToAction("Settings");
+                return StatusCode(500, new { message = $"An error occurred during backup: {ex.Message}" });
             }
         }
         [Authorize(Roles = "Admin")]

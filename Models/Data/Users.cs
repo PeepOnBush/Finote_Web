@@ -2,7 +2,7 @@
 
 namespace Finote_Web.Models.Data
 {
-    public class Users : IdentityUser
+    public class Users : IdentityUser 
     {
 
         public UserInfomation? UserInfomation { get; set; }
