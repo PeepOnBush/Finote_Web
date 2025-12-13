@@ -82,6 +82,7 @@
                             <th>File Name</th>
                             <th>Date Created</th>
                             <th>Size</th>
+                            <th>Action</th>
                             <!-- Optional: Add Action column if we implement download later -->
                         </tr>
                     </thead>
@@ -94,6 +95,14 @@
                                     <td>@file.FileName</td>
                                     <td>@file.CreatedAt.ToString("g")</td>
                                     <td>@file.Size</td>
+                                    <td>
+                                        <!-- ===== THE SYNC BUTTON ===== -->
+                                        <button type="button" class="btn-success sync-db-btn"
+                                                data-filename="@file.FileName">
+                                            <i class="fas fa-sync-alt"></i> Sync
+                                        </button>
+                                        <!-- =========================== -->
+                                    </td>
                                 </tr>
                             }
                         }
@@ -158,7 +167,26 @@
         </div>
     </div>
 </div>
+<!-- =================================================== -->
+<!-- ============ FORCE LOGOUT MODAL =================== -->
+<!-- =================================================== -->
+<div id="forceLogoutModal" class="modal-overlay-blur">
+    <div class="modal-box-center">
+        <div style="text-align: center;">
+            <i class="fas fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;"></i>
+            <h3>Database Restored Successfully</h3>
+            <p style="margin: 1rem 0; color: #555;">
+                The system data has been updated. <br>
+                <strong>You have to login again to continue.</strong>
+            </p>
 
+            <!-- This button redirects to Login -->
+            <a href="@Url.Action("Login", "Account")" class="btn-primary" style="display: inline-block; width: 100%; text-decoration: none;">
+                <i class="fas fa-sign-out-alt"></i> Logout & Login
+            </a>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
@@ -271,6 +299,50 @@
                     });
                 });
             }
+                // ============================================
+            // =========== SYNC DATABASE LOGIC ============
+            // ============================================
+            const syncButtons = document.querySelectorAll('.sync-db-btn');
+            const forceLogoutModal = document.getElementById('forceLogoutModal');
+
+            syncButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fileName = this.getAttribute('data-filename');
+
+                    if (!confirm('DANGER: This will OVERWRITE the current database with this backup. Current data will be lost. Are you sure?')) {
+                        return;
+                    }
+
+                    // 1. Disable button and show loading state
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restoring...';
+
+                    // 2. Make AJAX request
+                    fetch('@Url.Action("RestoreDatabase", "Home")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: `fileName=${encodeURIComponent(fileName)}`
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // 3. SUCCESS: Show the blur modal
+                            forceLogoutModal.style.display = 'flex'; // 'flex' enables the centering
+                        } else {
+                            return response.json().then(err => { throw new Error(err.message); });
+                        }
+                    })
+                    .catch(error => {
+                        alert('Restore Failed: ' + error.message);
+                        // Reset button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            });
         });
     </script>
 }

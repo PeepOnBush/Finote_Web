@@ -1,4 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Finote_Web.Models.Data
+@inject UserManager<Users> UserManager
 @inject IAuthorizationService AuthorizationService
 <!DOCTYPE html>
 <html lang="en">
@@ -98,7 +101,21 @@
     <div class="main-content">
         <header class="top-navbar">
             <div class="menu-toggle"><i class="fas fa-bars"></i></div>
-            <div class="user-info"><i class="fas fa-bell"></i><i class="fas fa-cog"></i><img src="https://i.pravatar.cc/40" alt="User Avatar" class="avatar"></div>
+            <div class="user-info">
+  
+
+                @{
+                    var currentUser = await UserManager.GetUserAsync(User);
+                    if (currentUser != null)
+                    {
+                        // Use a container for the text to stack it neatly
+                        <div class="user-profile-text">
+                            <span class="user-name">@(currentUser.UserInfomation?.FullName ?? User.Identity?.Name)</span>
+                            <span class="user-email">@currentUser.Email</span>
+                        </div>
+                    }
+                }
+            </div>
         </header>
 
         <!-- This is where the content of each individual page will be rendered -->

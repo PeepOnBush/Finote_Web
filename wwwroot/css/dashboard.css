@@ -969,3 +969,241 @@ tbody tr:last-child td {
 .new-row-highlight {
     animation: highlightFade 2s ease-out;
 }
+.btn-success {
+    background-color: #3498db; /* Green */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+    .btn-success:hover {
+        background-color: #0027ab; /* Darker Green */
+    }
+/* ================================================================ */
+/* ==================== MODERN FORM STYLING ======================= */
+/* ================================================================ */
+
+/* 1. Base Input Styling (Rounded, padded, clean border) */
+.form-control,
+select.form-control,
+input[type="date"].form-control,
+input[type="search"].form-control {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0; /* Light gray border */
+    border-radius: 8px; /* Rounded corners */
+    padding: 10px 15px; /* Comfortable spacing */
+    font-size: 0.95rem;
+    color: #4a5568;
+    width: 100%;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+    /* 2. Focus State (The "Glow" when you click) */
+    .form-control:focus {
+        border-color: #28a745; /* Finote Green */
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15); /* Green Glow */
+    }
+
+/* 3. Search Bar Specifics */
+.search-wrapper {
+    display: flex; /* Align icon and text side-by-side */
+    align-items: center; /* Center vertically */
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px; /* Pill shape */
+    padding: 10px 20px; /* Wrapper handles the padding, not the input */
+    width: 100%;
+    max-width: 400px;
+    transition: all 0.2s ease-in-out;
+    overflow: hidden; /* Keep everything inside the rounded corners */
+}
+
+    /* When you click anywhere in the wrapper, turn the border green */
+    .search-wrapper:focus-within {
+        border-color: #28a745;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+    }
+
+    .search-wrapper i {
+        color: #a0aec0;
+        margin-right: 12px; /* Space between icon and text */
+        font-size: 1rem;
+        flex-shrink: 0; /* Stop icon from getting squished */
+    }
+
+    /* THE CRITICAL FIX: Make the input invisible/transparent */
+    .search-wrapper input,
+    .search-wrapper input.form-control { /* Target .form-control specifically */
+        border: none !important; /* Kill the inner border */
+        outline: none !important; /* Kill the blue glow */
+        box-shadow: none !important; /* Kill Bootstrap shadow */
+        background: transparent !important;
+        padding: 0 !important; /* Remove inner padding */
+        margin: 0 !important;
+        height: 100% !important;
+        width: 100%;
+        font-size: 0.95rem;
+        color: #4a5568;
+    }
+/* 4. Filter Buttons (Transaction Page) */
+.btn-secondary {
+    background-color: #ffffff;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .btn-secondary:hover {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+        transform: translateY(-1px);
+    }
+
+/* 5. Modal Input Specifics */
+.modal-body label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #2d3748;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* File Input Styling */
+input[type="file"].form-control {
+    padding: 6px; /* Adjust padding for file input */
+}
+
+input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    border: none;
+    background: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: background .2s ease-in-out;
+}
+
+    input[type="file"]::file-selector-button:hover {
+        background: #cbd5e0;
+    }
+
+/* Toolbar Layout */
+.filter-toolbar {
+    display: flex;
+    flex-direction: column; /* Stack Filters on top, Add Button below */
+    align-items: center; /* Center everything horizontally */
+    gap: 20px;
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    margin-bottom: 20px;
+}
+
+/* Group the Search, Dropdown, Dates, and Filter Buttons together */
+.filter-controls {
+    display: flex;
+    justify-content: center; /* Center the items in the middle */
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px; /* Consistent spacing between items */
+    width: 100%;
+}
+
+/* Ensure the date range looks connected */
+.date-range-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* Style the big Add Button */
+.add-new-btn {
+    width: 100%; /* Make it span the full width */
+    text-align: center;
+    justify-content: center;
+    padding: 12px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+/* ================================================================ */
+/* ================= USER PROFILE TEXT STYLING ==================== */
+/* ================================================================ */
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-profile-text {
+    display: flex;
+    flex-direction: column; /* Stack name on top of email */
+    align-items: flex-end; /* Align text to the right */
+    line-height: 1.2;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #2d3748;
+}
+
+.user-email {
+    font-size: 0.8rem;
+    color: #718096;
+}
+/* Full screen overlay with Blur */
+.modal-overlay-blur {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white */
+    backdrop-filter: blur(8px); /* This does the blurring */
+    -webkit-backdrop-filter: blur(8px); /* Safari support */
+    z-index: 9999; /* On top of everything */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-box-center {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid #e2e8f0;
+    animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

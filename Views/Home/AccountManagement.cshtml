@@ -13,7 +13,6 @@
         <div class="toolbar">
             <!-- WRAP IN FORM -->
             <form asp-action="AccountManagement" method="get" class="search-wrapper">
-                <i class="fas fa-search"></i>
                 <!-- Add name="searchString" and value="@ViewData["CurrentFilter"]" -->
                 <input type="search" name="searchString" value="@ViewData["CurrentFilter"]" placeholder="Search by name or email..." onchange="this.form.submit()">
             </form>

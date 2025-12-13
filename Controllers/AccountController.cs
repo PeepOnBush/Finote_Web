@@ -34,33 +34,28 @@ namespace Finote_Web.Controllers
 
             if (ModelState.IsValid)
             {
-                // Find the user by their username first.
-                var user = await _userManager.FindByNameAsync(model.Email) ?? await _userManager.FindByEmailAsync(model.Email);
+                // 1. Try to find user by Username OR Email in one go
+                var user = await _userManager.FindByNameAsync(model.Email)
+                           ?? await _userManager.FindByEmailAsync(model.Email);
 
-
-                // ===== THIS IS THE FIX =====
-                // If the user is not found by username, try finding them by their email.
-                if (user == null)
+                if (user != null)
                 {
-                    user = await _userManager.FindByEmailAsync(model.Email);
-                }
-                // ===========================
+                    // 2. Check password and sign in
+                    // Note: Pass user.UserName here to be safe with all overloads
+                    var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, lockoutOnFailure: false);
 
-                // Now, proceed with the password check on the 'user' object we found (or didn't find).
-                if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
-                {
-                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, isPersistent: true, lockoutOnFailure: false);
                     if (result.Succeeded)
                     {
-                        // ===== LOG THE ACTIVITY =====
-                        await _logRepository.LogActivityAsync(user.Id, "Logged In");
+                        // 3. Log Activity
+                        // Make sure your IActivityLogService is injected as _logService (or _logRepository)
+                        await _logRepository.LogActivityAsync(user.Id, "Logged In"); // Ensure user.Id is an int if you changed it to int!
+
                         return LocalRedirect(returnUrl);
                     }
                 }
 
-                // If we reach this point, either the user was not found or the password was incorrect.
+                // Standard failure message
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return View(model);
             }
 
             return View(model);

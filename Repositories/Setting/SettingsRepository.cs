@@ -1,6 +1,7 @@
 ﻿using Finote_Web.Models.Data;
 using Finote_Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using System; 
 using System.IO; 
 public class SettingsRepository : ISettingsRepository
@@ -145,6 +146,54 @@ public class SettingsRepository : ISettingsRepository
 
         return await Task.FromResult(backupList);
     }
+    public async Task RestoreDatabaseAsync(string fileName)
+    {
+        var backupFolder = Path.Combine(Directory.GetCurrentDirectory(), "DatabaseBackups");
+        var filePath = Path.Combine(backupFolder, fileName);
 
+        if (!System.IO.File.Exists(filePath))
+        {
+            throw new FileNotFoundException("Backup file not found.");
+        }
+
+        // 1. Get current connection string and modify it to connect to 'master'
+        var currentConnString = _context.Database.GetConnectionString();
+        var builder = new SqlConnectionStringBuilder(currentConnString)
+        {
+            InitialCatalog = "master" // Switch to master database
+        };
+
+        var masterConnectionString = builder.ConnectionString;
+        var dbName = "Finote"; // Or get this dynamically if you prefer
+
+        // 2. Prepare the T-SQL script
+        // KILL sessions, RESTORE, and RESET permissions
+        var sql = $@"
+        USE master;
+        
+        -- Kick everyone off
+        ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+        
+        -- Restore
+        RESTORE DATABASE [{dbName}] 
+        FROM DISK = N'{filePath}' 
+        WITH REPLACE;
+        
+        -- Let people back in
+        ALTER DATABASE [{dbName}] SET MULTI_USER;
+    ";
+
+        // 3. Execute using a raw SQL connection (bypassing EF Context for Finote)
+        using (var connection = new SqlConnection(masterConnectionString))
+        {
+            await connection.OpenAsync();
+            using (var command = new SqlCommand(sql, connection))
+            {
+                // Restore can take time, increase timeout to 5 minutes or more
+                command.CommandTimeout = 300;
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+    }
 
 }

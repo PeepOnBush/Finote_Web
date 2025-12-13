@@ -16,34 +16,39 @@
 
     <div class="content-card">
         <!-- Filter Form -->
-        <form asp-action="TransactionManagement" method="get" class="toolbar" style="flex-wrap: wrap; gap: 10px;">
+        <form asp-action="TransactionManagement" method="get" class="toolbar filter-toolbar">
 
-            <!-- Search -->
+            <!-- Search Group -->
             <div class="search-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="search" name="searchString" value="@ViewBag.CurrentFilter" placeholder="Search note, category, user...">
+                <input type="search" name="searchString" value="@ViewBag.CurrentFilter" class="form-control" placeholder="Search...">
             </div>
 
-            <!-- Filter By Type -->
-            <select name="typeFilter" class="form-control" style="width: auto; display: inline-block;">
-                <option value="All" selected="@(ViewBag.TypeFilter == "All")">All Types</option>
-                <option value="Income" selected="@(ViewBag.TypeFilter == "Income")">Income Only</option>
-                <option value="Expense" selected="@(ViewBag.TypeFilter == "Expense")">Expense Only</option>
-            </select>
+            <!-- Filter Controls Group -->
+            <div class="filter-controls">
 
-            <!-- Date Range -->
-            <div style="display: flex; align-items: center; gap: 5px;">
-                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" placeholder="Start Date">
-                <span>to</span>
-                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" placeholder="End Date">
+                <!-- Type Select -->
+                <select name="typeFilter" class="form-control" style="width: 150px;">
+                    <option value="All" selected="@(ViewBag.TypeFilter == "All")">All Types</option>
+                    <option value="Income" selected="@(ViewBag.TypeFilter == "Income")">Income Only</option>
+                    <option value="Expense" selected="@(ViewBag.TypeFilter == "Expense")">Expense Only</option>
+                </select>
+
+                <!-- Date Range -->
+                <div class="date-range-group">
+                    <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control">
+                    <span class="range-separator">to</span>
+                    <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn-secondary">Filter</button>
+                    <a asp-action="TransactionManagement" class="btn-secondary">Reset</a>
+                </div>
             </div>
 
-            <!-- Filter Button -->
-            <button type="submit" class="btn-secondary" style="padding: 10px 15px;">Filter</button>
-
-            <!-- Clear Filters Link -->
-            <a asp-action="TransactionManagement" class="btn-secondary" style="text-decoration:none; display:flex; align-items:center;">Reset</a>
-
+            <!-- Add New (Pushed to end) -->
+            <a href="#" class="btn-primary add-new-btn"><i class="fas fa-plus"></i> Add New</a>
         </form>
 
         <div class="table-wrapper">

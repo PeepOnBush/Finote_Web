@@ -50,14 +50,21 @@ builder.Services.AddAuthorization(options =>
 // 3. ===== CONFIGURE THE AUTHENTICATION COOKIE =====
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    // If a user tries to access a protected page and is not logged in,
-    // they will be redirected to this path.
     options.LoginPath = "/Account/Login";
-
-    // Path to redirect to if a user is logged in but doesn't have permission
     options.AccessDeniedPath = "/Account/AccessDenied";
 
-    options.SlidingExpiration = true; // The cookie lifetime resets on each request
+    // ===== ADD THESE LINES =====
+    // This forces the session to expire if the user is inactive for 20 minutes
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+
+    // This resets the timer if they are active
+    options.SlidingExpiration = true;
+
+    // This tells the browser: "This cookie is strictly for this session only"
+    options.Cookie.IsEssential = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // ===========================
 });
 // ====================================================================
 

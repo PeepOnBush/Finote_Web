@@ -462,6 +462,23 @@ namespace Finote_Web.Controllers
             }
             return RedirectToAction("Settings");
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> RestoreDatabase(string fileName)
+        {
+            try
+            {
+                await _settingsRepo.RestoreDatabaseAsync(fileName);
+
+                // Return success JSON instead of redirecting
+                return Ok(new { message = "Restore successful" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Restore failed: {ex.Message}" });
+            }
+        }
+
         #endregion
     }
 }

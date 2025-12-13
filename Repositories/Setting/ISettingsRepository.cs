@@ -9,5 +9,7 @@ public interface ISettingsRepository
     Task<DateTime?> GetLastBackupDateAsync(); 
     Task UpdateLastBackupDateAsync();
     Task<List<BackupFileViewModel>> GetBackupHistoryAsync();
+    Task RestoreDatabaseAsync(string fileName); 
+
 
 }
