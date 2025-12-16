@@ -421,6 +421,8 @@ namespace Finote_Web.Controllers
         {
             try
             {
+                // 1. Trigger the backup. 
+                // This method ALREADY saves the file to the 'DatabaseBackups' folder on the server.
                 var backupFilePath = await _settingsRepo.BackupDatabaseAsync();
 
                 if (string.IsNullOrEmpty(backupFilePath) || !System.IO.File.Exists(backupFilePath))
@@ -428,27 +430,20 @@ namespace Finote_Web.Controllers
                     return StatusCode(500, new { message = "Failed to create the backup file." });
                 }
 
-                // Read bytes for download
-                var fileBytes = await System.IO.File.ReadAllBytesAsync(backupFilePath);
+                // 2. Get File Info for the UI
                 var fileName = Path.GetFileName(backupFilePath);
-
-                // ===== GET FILE SIZE FOR UI =====
                 var fileInfo = new FileInfo(backupFilePath);
                 string fileSizeString = (fileInfo.Length / 1024f / 1024f).ToString("0.00") + " MB";
-                // ================================
 
-                // IMPORTANT: If you want the file to appear in the list after reload, 
-                // DO NOT delete it here. If you delete it, the list is just a visual log.
-                // System.IO.File.Delete(backupFilePath); // <--- Keep this commented out if you want persistent history
-
+                // 3. Get the updated timestamp
                 var newTimestamp = await _settingsRepo.GetLastBackupDateAsync();
 
+                // 4. Return ONLY metadata (No fileContents)
                 return Ok(new
                 {
-                    fileContents = Convert.ToBase64String(fileBytes),
                     fileName = fileName,
                     newBackupDate = newTimestamp?.ToLocalTime().ToString("g") ?? "N/A",
-                    fileSize = fileSizeString // <--- Add this to the JSON
+                    fileSize = fileSizeString
                 });
             }
             catch (Exception ex)

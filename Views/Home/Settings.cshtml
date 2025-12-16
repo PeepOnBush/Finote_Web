@@ -247,56 +247,49 @@
                         }
                         return response.json();
                     })
-                    .then(data => {
-                        // 3. Trigger Download
-                        const byteCharacters = atob(data.fileContents);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) {
-                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        const byteArray = new Uint8Array(byteNumbers);
-                        const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+                            .then(data => {
+            // --- 1. Update UI Text ---
+            lastBackupDateSpan.textContent = data.newBackupDate;
+            statusSpan.textContent = 'Backup created successfully on server!';
+            statusSpan.style.color = 'green';
 
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = data.fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+            // --- 2. Update Table List Real-Time ---
+            const tableBody = document.getElementById('backupTableBody');
 
-                        // 4. Update UI Text
-                        lastBackupDateSpan.textContent = data.newBackupDate;
-                        statusSpan.textContent = 'Backup successful!';
-                        statusSpan.style.color = 'green';
+            // Remove the "No files" row if it exists
+            const noFilesRow = tableBody.querySelector('.no-files-row');
+            if (noFilesRow) {
+                noFilesRow.remove();
+            }
 
-                        // 5. Update Table List Real-Time
-                        // Remove "No files" row if it exists
-                        const noFilesRow = backupTableBody.querySelector('.no-files-row');
-                        if (noFilesRow) {
-                            noFilesRow.remove();
-                        }
+            // Create new row
+            const newRow = document.createElement('tr');
+            newRow.classList.add('new-row-highlight');
 
-                        // Create new row
-                        const newRow = document.createElement('tr');
-                        newRow.classList.add('new-row-highlight'); // For CSS animation
-                        newRow.innerHTML = `
-                            <td>${data.fileName}</td>
-                            <td>${data.newBackupDate}</td>
-                            <td>${data.fileSize}</td>
-                        `;
+            // Add the row content (FileName, Date, Size, and the Sync Button)
+            newRow.innerHTML = `
+                <td>${data.fileName}</td>
+                <td>${data.newBackupDate}</td>
+                <td>${data.fileSize}</td>
+                <td>
+                    <button type="button" class="btn-success sync-db-btn" data-filename="${data.fileName}">
+                        <i class="fas fa-sync-alt"></i> Sync
+                    </button>
+                </td>
+            `;
 
-                        // Insert at top
-                        backupTableBody.insertBefore(newRow, backupTableBody.firstChild);
-                    })
-                    .catch(error => {
-                        console.error('Backup failed:', error);
-                        statusSpan.textContent = `Error: ${error.message}`;
-                        statusSpan.style.color = 'red';
-                    })
-                    .finally(() => {
-                        backupButton.disabled = false;
-                        setTimeout(() => { statusSpan.textContent = ''; }, 5000);
-                    });
+            // Insert at top
+            tableBody.insertBefore(newRow, tableBody.firstChild);
+
+            // Re-attach event listener to the new Sync button immediately
+            // (Or use event delegation on the table body to avoid this step, but this works fine)
+            const newSyncBtn = newRow.querySelector('.sync-db-btn');
+            if(newSyncBtn) {
+                newSyncBtn.addEventListener('click', handleSyncClick); // Assuming you extracted the sync logic to a function
+                // If you didn't extract logic, the button won't work until refresh.
+                // Ideally, reload the page or use event delegation for the sync buttons.
+            }
+        })
                 });
             }
                 // ============================================
