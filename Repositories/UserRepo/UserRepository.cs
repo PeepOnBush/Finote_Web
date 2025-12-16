@@ -197,19 +197,29 @@ namespace Finote_Web.Repositories.UserRepo
             await _userManager.AddToRoleAsync(user, userToUpdate.SelectedRole);
         }
 
-        public async Task DeleteUserAsync(string id) // Ensure this takes 'string id' or 'int id' based on your previous ID change
+        public async Task DeleteUserAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
-            if (user != null)
-            {
-                
-                // Let's assume you want to see "User X was deleted".
-                await _logRepository.LogActivityAsync(user.Id.ToString(), $"Account Deleted: {user.UserName} ({user.Email})");
-                // =================================================
+            if (user == null) return;
 
-                var result = await _userManager.DeleteAsync(user);
-                if (!result.Succeeded) throw new ApplicationException("Failed to delete user.");
+            // ===== 1. CHECK FOR WALLETS =====
+            var hasWallets = await _context.Wallets.AnyAsync(w => w.UserId.Equals(id));
+            if (hasWallets)
+            {
+                throw new InvalidOperationException($"Cannot delete user '{user.UserName}'. They still have active Wallets.");
             }
+
+            // ===== 2. CHECK FOR TRANSACTIONS =====
+            // Check if they created transactions (even if wallet is gone)
+            var hasTransactions = await _context.Transactions.AnyAsync(t => t.CreatedByUserId.Equals(id));
+            if (hasTransactions)
+            {
+                throw new InvalidOperationException($"Cannot delete user '{user.UserName}'. They have recorded Transactions history.");
+            }
+
+            // ===== 3. PROCEED IF SAFE =====
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded) throw new ApplicationException("Failed to delete user.");
         }
     }
 }

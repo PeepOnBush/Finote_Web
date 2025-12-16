@@ -117,31 +117,52 @@ namespace Finote_Web.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(AddUserViewModel newUser)
         {
+            // 1. Standard Validation Check
             if (!ModelState.IsValid)
             {
-                // If validation fails, we must rebuild the entire page state
-                ViewData["CurrentPage"] = "AccountManagement";
-                ViewData["ShowModal"] = true;
-
-                // Repopulate the dropdown list
-                newUser.AvailableRoles = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "Admin", Text = "Admin" },
-                    new SelectListItem { Value = "Editor", Text = "Editor" },
-                    new SelectListItem { Value = "User", Text = "User" }
-                };
-
-                var users = await _userRepo.GetAllUsersAsync();
-                var viewModel = new AccountManagementViewModel
-                {
-                    Users = users.ToList(),
-                    NewUser = newUser // Pass back the invalid model to show validation errors
-                };
-                return View("AccountManagement", viewModel);
+                return ReturnWithError(newUser);
             }
 
-            await _userRepo.CreateUserAsync(newUser);
-            return RedirectToAction("AccountManagement");
+            try
+            {
+                // 2. Try to create the user
+                await _userRepo.CreateUserAsync(newUser);
+                TempData["SuccessMessage"] = $"User {newUser.UserName} created successfully.";
+                return RedirectToAction("AccountManagement");
+            }
+            catch (Exception ex)
+            {
+                // 3. CATCH THE ERROR (e.g., "Username taken")
+                // Add the error message to the ModelState so it appears in the summary
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                // Return the view with the modal open
+                return ReturnWithError(newUser);
+            }
+        }
+        // Helper function to avoid code duplication
+        private IActionResult ReturnWithError(AddUserViewModel newUser)
+        {
+            ViewData["CurrentPage"] = "AccountManagement";
+            ViewData["ShowModal"] = true; // KEEP MODAL OPEN
+
+            // Re-populate dropdowns
+            newUser.AvailableRoles = new List<SelectListItem>
+    {
+        new SelectListItem { Value = "Admin", Text = "Admin" },
+        new SelectListItem { Value = "Editor", Text = "Editor" },
+        new SelectListItem { Value = "User", Text = "User" }
+    };
+
+            // Re-fetch the list so the table isn't empty behind the modal
+            var users = _userRepo.GetAllUsersAsync().Result; // Note: In async method, better to await, but helper makes it tricky. Ideally copy logic.
+
+            var viewModel = new AccountManagementViewModel
+            {
+                Users = users.ToList(),
+                NewUser = newUser
+            };
+            return View("AccountManagement", viewModel);
         }
 
         [Authorize(Roles = "Admin")]
@@ -166,11 +187,21 @@ namespace Finote_Web.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateUser(EditUserViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return RedirectToAction("AccountManagement");
+
+            try
             {
-                return RedirectToAction("AccountManagement");
+                await _userRepo.UpdateUserAsync(model);
+                TempData["SuccessMessage"] = "User updated successfully.";
             }
-            await _userRepo.UpdateUserAsync(model);
+            catch (Exception ex)
+            {
+                // Since this is a redirect, we can't easily keep the modal open with errors 
+                // unless we rewrite the logic to return View(). 
+                // For now, using TempData is the safest quick fix.
+                TempData["ErrorMessage"] = "Update Failed: " + ex.Message;
+            }
+
             return RedirectToAction("AccountManagement");
         }
 
@@ -178,29 +209,24 @@ namespace Finote_Web.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(id)) return BadRequest();
+
+            try
             {
-                return BadRequest();
-            }
-
-            // 1. Get the details of the user we are about to delete (so we can log their name)
-            var userToDelete = await _userManager.FindByIdAsync(id);
-
-            if (userToDelete != null)
-            {
-                // Store the name for the log message
-                string deletedUserName = userToDelete.UserName;
-                string deletedUserEmail = userToDelete.Email;
-
-                // 2. Perform the delete
+                // Ideally, pass int if you converted ID to int
                 await _userRepo.DeleteUserAsync(id);
 
-                // 3. Get the ID of the CURRENT ADMIN (You)
-                var adminId = _userManager.GetUserId(User);
-
-                // 4. Log the action assigned to the ADMIN
-                // This log will persist because the Admin user is NOT being deleted.
-                await _activityLogRepository.LogActivityAsync(adminId, $"Deleted User: {deletedUserName} ({deletedUserEmail})");
+                TempData["SuccessMessage"] = "User deleted successfully.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                // This catches our "Has Wallet" error
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                // This catches database errors
+                TempData["ErrorMessage"] = "An error occurred while deleting: " + ex.Message;
             }
 
             return RedirectToAction("AccountManagement");

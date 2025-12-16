@@ -14,8 +14,14 @@
 
     <form asp-action="Login" asp-controller="Account" method="post">
         @Html.AntiForgeryToken()
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                <div asp-validation-summary="ModelOnly"></div>
+            </div>
+        }
         <div class="form-group">
-            <label asp-for="Email">Email Address</label>
+            <label asp-for="Email">Email Address or Username</label>
             <input asp-for="Email" class="form-control" placeholder="Enter your email" required>
         </div>
 

@@ -8,7 +8,18 @@
         <h1>Account Management</h1>
         <p>Manage user accounts, roles, and permissions.</p>
     </div>
-
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success" style="padding: 15px; background-color: #d4edda; color: #155724; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger" style="padding: 15px; background-color: #f8d7da; color: #721c24; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
     <div class="content-card">
         <div class="toolbar">
             <!-- WRAP IN FORM -->
@@ -74,11 +85,14 @@
 <!-- ============= ADD NEW USER MODAL ================== -->
 <!-- =================================================== -->
 <div id="addUserModal" class="modal">
+
     <div class="modal-content">
         <div class="modal-header">
             <h2>Add New User</h2>
             <span class="close-btn">&times;</span>
         </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem; font-weight: bold;"></div>
+
         <div class="modal-body">
             <form asp-action="CreateUser" asp-controller="Home" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
